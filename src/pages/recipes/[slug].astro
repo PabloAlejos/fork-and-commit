@@ -23,10 +23,11 @@ const { Content } = await recipe.render();
   <!-- Header -->
   <header class="header">
     <div class="header-content">
-      <a href="/" class="back-link">← Volver a recetas</a>
-      <h1 class="site-title">🍽️ Mi Libro de Recetas</h1>
-      <div class="subtitle">Colección personal de cocina</div>
+      <a href={import.meta.env.BASE_URL.replace(/\/?$/, '/')} class="back-link">cd ..</a>
+      <h1 class="site-title">Fork & Commit</h1>
+      <div class="tagline"><span class="prompt">$</span> Where recipes are never half-baked.<span class="cursor">_</span></div>
     </div>
+    <div class="header-border"></div>
   </header>
 
   <!-- Main content -->
@@ -57,7 +58,7 @@ const { Content } = await recipe.render();
       {recipe.data.tags && recipe.data.tags.length > 0 && (
         <div class="tags">
           {recipe.data.tags.map(tag => (
-            <a href={`/?tag=${encodeURIComponent(tag)}`} class="tag tag-link">{tag}</a>
+            <a href={`${import.meta.env.BASE_URL.replace(/\/?$/, '/')}?tag=${encodeURIComponent(tag)}`} class="tag tag-link">{tag}</a>
           ))}
         </div>
       )}
@@ -68,47 +69,77 @@ const { Content } = await recipe.render();
       <Content />
     </article>
   </div>
+
+  <!-- Footer -->
+  <footer class="site-footer">
+    <span class="footer-cmd">git cook --with-love</span>
+  </footer>
 </Layout>
 
 <style>
   /* Header */
   .header {
-    background: var(--warmblack);
-    padding: 1.5rem 2rem;
-    border-bottom: 4px solid var(--terracotta);
+    background: var(--terminal);
+    padding: 1.5rem 2rem 0;
+    position: relative;
   }
 
   .header-content {
     max-width: 900px;
     margin: 0 auto;
+    padding-bottom: 1.5rem;
+  }
+
+  .header-border {
+    height: 3px;
+    background: linear-gradient(90deg, var(--ember), var(--saffron));
   }
 
   .back-link {
     display: inline-block;
-    color: var(--honey);
+    color: var(--saffron);
     text-decoration: none;
-    margin-bottom: 1rem;
-    font-size: 0.9rem;
+    margin-bottom: 0.75rem;
+    font-size: 0.85rem;
+    font-family: 'JetBrains Mono', monospace;
     transition: color 0.2s ease;
+    opacity: 0.8;
   }
 
   .back-link:hover {
-    color: var(--terracotta);
+    color: var(--ember);
+    opacity: 1;
   }
 
   .site-title {
-    font-family: 'Crimson Pro', serif;
+    font-family: 'Space Grotesk', sans-serif;
     font-size: 1.8rem;
-    color: var(--cream);
+    color: var(--parchment);
     font-weight: 700;
     letter-spacing: -0.02em;
     margin-bottom: 0.25rem;
   }
 
-  .subtitle {
-    color: var(--honey);
-    font-size: 0.9rem;
-    font-weight: 500;
+  .tagline {
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--saffron);
+    font-size: 0.8rem;
+    font-weight: 400;
+  }
+
+  .prompt {
+    color: var(--coral);
+    margin-right: 0.25rem;
+  }
+
+  .cursor {
+    color: var(--ember);
+    animation: blink 1s step-end infinite;
+  }
+
+  @keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0; }
   }
 
   /* Container */
@@ -121,16 +152,16 @@ const { Content } = await recipe.render();
   /* Recipe header */
   .recipe-header {
     margin-bottom: 3rem;
-    border-bottom: 2px solid var(--terracotta);
+    border-bottom: 2px solid var(--simmer);
     padding-bottom: 2rem;
     animation: fadeInUp 0.6s ease;
   }
 
   .recipe-title {
-    font-family: 'Crimson Pro', serif;
+    font-family: 'Space Grotesk', sans-serif;
     font-size: 3rem;
     font-weight: 700;
-    color: var(--warmblack);
+    color: var(--cast-iron);
     line-height: 1.1;
     margin-bottom: 1.5rem;
     letter-spacing: -0.03em;
@@ -145,25 +176,27 @@ const { Content } = await recipe.render();
   }
 
   .meta-item {
-    background: white;
+    background: var(--flour);
     padding: 1rem;
     border-radius: 8px;
     box-shadow: 0 2px 8px var(--shadow);
+    border-left: 3px solid var(--simmer);
   }
 
   .meta-label {
     font-size: 0.75rem;
     text-transform: uppercase;
     letter-spacing: 0.08em;
-    color: var(--terracotta);
+    color: var(--ember);
     font-weight: 700;
     margin-bottom: 0.25rem;
+    font-family: 'JetBrains Mono', monospace;
   }
 
   .meta-value {
     font-size: 1.1rem;
     font-weight: 600;
-    color: var(--warmblack);
+    color: var(--cast-iron);
   }
 
   /* Tags */
@@ -174,7 +207,6 @@ const { Content } = await recipe.render();
     margin-top: 1.5rem;
   }
 
-  /* Ajuste de tamaño para página de detalle */
   .tags .tag {
     font-size: 0.85rem;
   }
@@ -186,29 +218,30 @@ const { Content } = await recipe.render();
 
   /* Markdown content styling */
   .recipe-content :global(h2) {
-    font-family: 'Crimson Pro', serif;
+    font-family: 'Space Grotesk', sans-serif;
     font-size: 1.8rem;
     font-weight: 700;
-    color: var(--warmblack);
+    color: var(--cast-iron);
     margin: 3rem 0 1.5rem 0;
-    border-left: 4px solid var(--terracotta);
+    border-left: 4px solid var(--coral);
     padding-left: 1rem;
   }
 
   .recipe-content :global(h3) {
-    font-size: 1.1rem;
+    font-size: 0.9rem;
     font-weight: 700;
-    color: var(--terracotta);
+    color: var(--ember);
     margin: 1.5rem 0 1rem 0;
     text-transform: uppercase;
     letter-spacing: 0.05em;
-    font-size: 0.9rem;
+    font-family: 'Space Grotesk', sans-serif;
   }
 
   .recipe-content :global(p) {
     margin-bottom: 1rem;
     line-height: 1.7;
-    color: #555;
+    color: var(--graphite);
+    font-family: 'Source Serif 4', serif;
   }
 
   .recipe-content :global(ul),
@@ -219,69 +252,68 @@ const { Content } = await recipe.render();
 
   .recipe-content :global(li) {
     margin-bottom: 0.5rem;
-    color: #555;
+    color: var(--graphite);
+    font-family: 'Source Serif 4', serif;
   }
 
   .recipe-content :global(strong) {
-    color: var(--terracotta);
+    color: var(--ember);
     font-weight: 700;
   }
 
   .recipe-content :global(code) {
-    background: var(--sage);
-    color: white;
+    background: var(--terminal);
+    color: rgba(255, 255, 255, 0.9);
     padding: 0.2rem 0.5rem;
     border-radius: 4px;
-    font-size: 0.9em;
+    font-size: 0.85em;
+    font-family: 'JetBrains Mono', monospace;
   }
 
-  /* Blockquotes for notes - Notepad style */
+  /* Blockquotes — code-comment style */
   .recipe-content :global(blockquote) {
-    background: linear-gradient(
-      to bottom,
-      #fafafa 0%,
-      #ffffff 8%,
-      #ffffff 100%
-    );
-    border: 1px solid #e0e0e0;
-    border-left: 3px solid var(--terracotta);
+    background: var(--flour);
+    border: 1px solid var(--simmer);
+    border-left: 3px solid var(--saffron);
     padding: 1.5rem 1.5rem 1.5rem 2rem;
     margin: 2rem 0;
     border-radius: 4px;
-    box-shadow:
-      0 1px 3px rgba(0, 0, 0, 0.05),
-      0 2px 8px rgba(0, 0, 0, 0.03);
+    box-shadow: 0 1px 3px var(--shadow);
     position: relative;
-    /* Subtle lines like a notepad */
-    background-image:
-      linear-gradient(
-        to bottom,
-        transparent 0%,
-        transparent calc(100% - 1px),
-        #f5f5f5 calc(100% - 1px),
-        #f5f5f5 100%
-      );
-    background-size: 100% 1.7rem;
-    background-position: 0 1.5rem;
   }
 
   .recipe-content :global(blockquote)::before {
-    content: "📝";
-    position: absolute;
-    left: 0.5rem;
-    top: 0.5rem;
-    font-size: 1rem;
-    opacity: 0.6;
+    content: "// Nota:";
+    display: block;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.75rem;
+    color: var(--coral);
+    margin-bottom: 0.5rem;
+    font-weight: 500;
   }
 
   .recipe-content :global(blockquote p) {
-    color: #333;
+    color: var(--cast-iron);
     position: relative;
     z-index: 1;
   }
 
   .recipe-content :global(blockquote strong) {
-    color: var(--warmblack);
+    color: var(--cast-iron);
+  }
+
+  /* Footer */
+  .site-footer {
+    text-align: center;
+    padding: 2rem 1rem;
+    border-top: 1px solid var(--simmer);
+  }
+
+  .footer-cmd {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.8rem;
+    color: var(--graphite);
+    opacity: 0.7;
   }
 
   /* Animations */
@@ -311,7 +343,7 @@ const { Content } = await recipe.render();
     }
 
     .header {
-      padding: 1rem 1.5rem;
+      padding: 1rem 1.5rem 0;
     }
 
     .site-title {
@@ -322,6 +354,10 @@ const { Content } = await recipe.render();
   /* Print styles for kitchen use */
   @media print {
     .header {
+      display: none;
+    }
+
+    .site-footer {
       display: none;
     }
 

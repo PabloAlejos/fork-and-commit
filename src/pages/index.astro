@@ -10,8 +10,11 @@ const recipes = await getCollection('recipes');
 <Layout>
 	<!-- Header -->
 	<header class="header">
-		<h1 class="site-title">🍽️ Mi Libro de Recetas</h1>
-		<div class="subtitle">Colección personal de cocina</div>
+		<div class="header-inner">
+			<h1 class="site-title">Fork & Commit</h1>
+			<div class="tagline"><span class="prompt">$</span> Where recipes are never half-baked.<span class="cursor">_</span></div>
+		</div>
+		<div class="header-border"></div>
 	</header>
 
 	<main class="container">
@@ -19,43 +22,75 @@ const recipes = await getCollection('recipes');
 		<RecipeFilters />
 
 		<div class="recipes-grid">
-			{recipes.map(recipe => (
-				<RecipeCard
-					title={recipe.data.title}
-					slug={recipe.slug}
-					category={recipe.data.category}
-					totalTime={recipe.data.total_time}
-					difficulty={recipe.data.difficulty}
-					servings={recipe.data.servings}
-					tags={recipe.data.tags}
-				/>
+			{recipes.map((recipe, i) => (
+				<div class="card-wrapper" style={`--delay: ${i * 0.06}s`}>
+					<RecipeCard
+						title={recipe.data.title}
+						slug={recipe.slug}
+						category={recipe.data.category}
+						totalTime={recipe.data.total_time}
+						difficulty={recipe.data.difficulty}
+						servings={recipe.data.servings}
+						tags={recipe.data.tags}
+					/>
+				</div>
 			))}
 		</div>
 	</main>
+
+	<!-- Footer -->
+	<footer class="site-footer">
+		<span class="footer-cmd">git cook --with-love</span>
+	</footer>
 </Layout>
 
 <style>
 	/* Header */
 	.header {
-		background: var(--warmblack);
-		padding: 1.5rem 2rem;
-		border-bottom: 4px solid var(--terracotta);
+		background: var(--terminal);
+		padding: 1.5rem 2rem 0;
 		text-align: center;
+		position: relative;
+	}
+
+	.header-inner {
+		padding-bottom: 1.5rem;
+	}
+
+	.header-border {
+		height: 3px;
+		background: linear-gradient(90deg, var(--ember), var(--saffron));
 	}
 
 	.site-title {
-		font-family: 'Crimson Pro', serif;
-		font-size: 1.8rem;
-		color: var(--cream);
+		font-family: 'Space Grotesk', sans-serif;
+		font-size: 2rem;
+		color: var(--parchment);
 		font-weight: 700;
 		letter-spacing: -0.02em;
-		margin-bottom: 0.25rem;
+		margin-bottom: 0.35rem;
 	}
 
-	.subtitle {
-		color: var(--honey);
-		font-size: 0.9rem;
-		font-weight: 500;
+	.tagline {
+		font-family: 'JetBrains Mono', monospace;
+		color: var(--saffron);
+		font-size: 0.85rem;
+		font-weight: 400;
+	}
+
+	.prompt {
+		color: var(--coral);
+		margin-right: 0.25rem;
+	}
+
+	.cursor {
+		color: var(--ember);
+		animation: blink 1s step-end infinite;
+	}
+
+	@keyframes blink {
+		0%, 100% { opacity: 1; }
+		50% { opacity: 0; }
 	}
 
 	/* Container */
@@ -70,6 +105,37 @@ const recipes = await getCollection('recipes');
 		display: grid;
 		grid-template-columns: 1fr;
 		gap: 1.5rem;
+	}
+
+	/* Card staggered animation */
+	.card-wrapper {
+		animation: fadeInUp 0.4s ease both;
+		animation-delay: var(--delay);
+	}
+
+	@keyframes fadeInUp {
+		from {
+			opacity: 0;
+			transform: translateY(16px);
+		}
+		to {
+			opacity: 1;
+			transform: translateY(0);
+		}
+	}
+
+	/* Footer */
+	.site-footer {
+		text-align: center;
+		padding: 2rem 1rem;
+		border-top: 1px solid var(--simmer);
+	}
+
+	.footer-cmd {
+		font-family: 'JetBrains Mono', monospace;
+		font-size: 0.8rem;
+		color: var(--graphite);
+		opacity: 0.7;
 	}
 
 	/* Tablet and up */
@@ -89,11 +155,15 @@ const recipes = await getCollection('recipes');
 	/* Responsive */
 	@media (max-width: 640px) {
 		.header {
-			padding: 1rem 1.5rem;
+			padding: 1rem 1.5rem 0;
 		}
 
 		.site-title {
 			font-size: 1.5rem;
+		}
+
+		.tagline {
+			font-size: 0.75rem;
 		}
 
 		.container {
@@ -120,13 +190,10 @@ const recipes = await getCollection('recipes');
 				// Disparar evento personalizado para que RecipeFilters lo capture
 				const event = new CustomEvent('selectTag', { detail: { tag } });
 				window.dispatchEvent(event);
-
-				// No hacer scroll si clickamos dentro de la misma vista
 			}
 
 			// Si clickaron en un link de receta, dejarlo pasar
 			if (target.closest('.recipe-card') && !target.classList.contains('tag-clickable')) {
-				// Dejar que el link funcione normalmente
 				return;
 			}
 		});
@@ -136,11 +203,9 @@ const recipes = await getCollection('recipes');
 		const tagFromUrl = urlParams.get('tag');
 
 		if (tagFromUrl) {
-			// Disparar evento para seleccionar el tag
 			const event = new CustomEvent('selectTag', { detail: { tag: tagFromUrl } });
 			window.dispatchEvent(event);
 
-			// Limpiar la URL sin recargar la página
 			window.history.replaceState({}, '', window.location.pathname);
 		}
 	});

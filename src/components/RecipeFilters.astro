@@ -5,11 +5,14 @@
 <div class="filters-container">
 	<!-- Barra de búsqueda -->
 	<div class="search-bar">
-		<span class="search-icon">🔍</span>
+		<svg class="search-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+			<circle cx="8.5" cy="8.5" r="5.5" />
+			<path d="M12.5 12.5L17 17" />
+		</svg>
 		<input
 			type="text"
 			id="search-input"
-			placeholder="Buscar recetas..."
+			placeholder="> Buscar recetas..."
 			class="search-input"
 		/>
 		<button id="clear-search" class="clear-btn" style="display: none;">✕</button>
@@ -82,35 +85,40 @@
 		position: relative;
 		display: flex;
 		align-items: center;
-		background: white;
-		border-radius: 12px;
-		box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+		background: var(--flour);
+		border-radius: 8px;
+		box-shadow: 0 2px 8px var(--shadow);
 		padding: 0.75rem 1rem;
 		margin-bottom: 1rem;
+		border: 1px solid var(--simmer);
 	}
 
 	.search-icon {
-		font-size: 1.25rem;
+		width: 18px;
+		height: 18px;
 		margin-right: 0.75rem;
-		color: var(--sage);
+		color: var(--graphite);
+		flex-shrink: 0;
 	}
 
 	.search-input {
 		flex: 1;
 		border: none;
 		outline: none;
-		font-size: 1rem;
-		font-family: 'DM Sans', sans-serif;
-		color: var(--warmblack);
+		font-size: 0.9rem;
+		font-family: 'JetBrains Mono', monospace;
+		color: var(--cast-iron);
 		background: transparent;
+		caret-color: var(--ember);
 	}
 
 	.search-input::placeholder {
-		color: #95a5a6;
+		color: var(--graphite);
+		opacity: 0.5;
 	}
 
 	.clear-btn {
-		background: var(--terracotta);
+		background: var(--ember);
 		color: white;
 		border: none;
 		border-radius: 50%;
@@ -125,29 +133,31 @@
 	}
 
 	.clear-btn:hover {
-		background: #c06642;
+		background: var(--ember-dark);
 	}
 
 	/* Toggle de filtros (mobile) */
 	.filters-toggle {
 		width: 100%;
-		background: white;
-		border: 2px solid var(--sage);
-		border-radius: 12px;
+		background: var(--flour);
+		border: 2px solid var(--simmer);
+		border-radius: 8px;
 		padding: 0.875rem 1rem;
-		font-size: 1rem;
+		font-size: 0.9rem;
 		font-weight: 600;
-		color: var(--warmblack);
+		color: var(--cast-iron);
 		cursor: pointer;
 		display: flex;
 		justify-content: space-between;
 		align-items: center;
 		transition: all 0.3s ease;
 		margin-bottom: 1rem;
+		font-family: 'Space Grotesk', sans-serif;
 	}
 
 	.filters-toggle:hover {
-		background: var(--sage);
+		border-color: var(--terminal);
+		background: var(--terminal);
 		color: white;
 	}
 
@@ -162,8 +172,8 @@
 
 	/* Panel de filtros */
 	.filters-panel {
-		background: white;
-		border-radius: 12px;
+		background: var(--flour);
+		border-radius: 8px;
 		box-shadow: 0 0 0 rgba(0, 0, 0, 0);
 		padding: 0 1.5rem;
 		margin-bottom: 0;
@@ -176,26 +186,26 @@
 		max-height: 500px;
 		padding: 1.5rem;
 		margin-bottom: 1rem;
-		box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+		box-shadow: 0 2px 8px var(--shadow);
 	}
 
 	.filters-panel.desktop-visible {
 		max-height: none;
 		padding: 1.5rem;
 		margin-bottom: 1rem;
-		box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+		box-shadow: 0 2px 8px var(--shadow);
 	}
 
 	/* Active tag indicator */
 	.active-tag-indicator {
-		background: linear-gradient(135deg, var(--terracotta), #e88f6f);
-		border-radius: 12px;
+		background: var(--terminal);
+		border-radius: 6px;
 		padding: 1rem 1.25rem;
 		margin-bottom: 1.5rem;
 		display: flex;
 		align-items: center;
 		gap: 0.75rem;
-		box-shadow: 0 4px 12px rgba(212, 117, 78, 0.25);
+		box-shadow: 0 4px 12px var(--shadow-terminal);
 		animation: slideDown 0.3s ease;
 	}
 
@@ -211,26 +221,26 @@
 	}
 
 	.active-tag-label {
-		color: white;
-		font-size: 0.875rem;
-		font-weight: 600;
-		text-transform: uppercase;
-		letter-spacing: 0.5px;
+		color: rgba(255, 255, 255, 0.7);
+		font-size: 0.8rem;
+		font-weight: 500;
+		font-family: 'JetBrains Mono', monospace;
 	}
 
 	.active-tag-badge {
-		background: white;
-		color: var(--terracotta);
-		padding: 0.4rem 1rem;
-		border-radius: 20px;
-		font-size: 0.875rem;
-		font-weight: 600;
+		background: var(--ember);
+		color: white;
+		padding: 0.35rem 0.85rem;
+		border-radius: 4px;
+		font-size: 0.8rem;
+		font-weight: 500;
 		flex: 1;
+		font-family: 'JetBrains Mono', monospace;
 	}
 
 	.clear-tag-btn {
-		background: rgba(255, 255, 255, 0.2);
-		border: 2px solid white;
+		background: rgba(255, 255, 255, 0.1);
+		border: 1px solid rgba(255, 255, 255, 0.3);
 		color: white;
 		border-radius: 50%;
 		width: 28px;
@@ -245,8 +255,8 @@
 	}
 
 	.clear-tag-btn:hover {
-		background: white;
-		color: var(--terracotta);
+		background: var(--ember);
+		border-color: var(--ember);
 		transform: rotate(90deg);
 	}
 
@@ -264,53 +274,57 @@
 	}
 
 	.filter-label {
-		font-size: 0.875rem;
+		font-size: 0.8rem;
 		font-weight: 600;
-		color: var(--warmblack);
+		color: var(--cast-iron);
 		text-transform: uppercase;
 		letter-spacing: 0.5px;
+		font-family: 'Space Grotesk', sans-serif;
 	}
 
 	.filter-select {
 		padding: 0.75rem;
-		border: 2px solid #ecf0f1;
-		border-radius: 8px;
-		font-size: 1rem;
-		font-family: 'DM Sans', sans-serif;
-		color: var(--warmblack);
-		background: white;
+		border: 2px solid var(--simmer);
+		border-radius: 6px;
+		font-size: 0.9rem;
+		font-family: 'Space Grotesk', sans-serif;
+		color: var(--cast-iron);
+		background: var(--flour);
 		cursor: pointer;
 		transition: border-color 0.2s;
 	}
 
 	.filter-select:focus {
 		outline: none;
-		border-color: var(--sage);
+		border-color: var(--coral);
 	}
 
 	.clear-filters-btn {
 		width: 100%;
 		padding: 0.75rem;
-		background: var(--honey);
-		color: white;
+		background: var(--terminal);
+		color: rgba(255, 255, 255, 0.9);
 		border: none;
-		border-radius: 8px;
+		border-radius: 6px;
 		font-weight: 600;
 		cursor: pointer;
 		transition: background 0.2s;
+		font-family: 'Space Grotesk', sans-serif;
+		font-size: 0.85rem;
 	}
 
 	.clear-filters-btn:hover {
-		background: #d9a44e;
+		background: var(--cast-iron);
 	}
 
 	/* Contador de resultados */
 	.results-count {
 		text-align: center;
-		color: var(--sage);
-		font-size: 0.875rem;
+		color: var(--graphite);
+		font-size: 0.8rem;
 		font-weight: 500;
 		margin-bottom: 1rem;
+		font-family: 'JetBrains Mono', monospace;
 	}
 
 	/* Tablet y Desktop */
@@ -371,7 +385,6 @@
 
 	// Actualizar apariencia de tags en las tarjetas
 	function updateTagsAppearance() {
-		// Actualizar tags en las tarjetas
 		recipeCards.forEach(card => {
 			const tagButtons = card.querySelectorAll('.tag-clickable');
 			tagButtons.forEach(tagBtn => {
@@ -384,7 +397,6 @@
 			});
 		});
 
-		// Actualizar indicador visual
 		if (activeTag) {
 			activeTagText.textContent = activeTag;
 			activeTagIndicator.style.display = 'flex';
@@ -396,7 +408,6 @@
 	// Seleccionar/deseleccionar tag
 	function setActiveTag(tag: string | null) {
 		if (activeTag === tag) {
-			// Si clickas el mismo tag, lo deseleccionas
 			activeTag = null;
 		} else {
 			activeTag = tag;
@@ -445,25 +456,18 @@
 			const timeText = card.querySelector('.card-meta .meta-item:first-child')?.textContent?.trim() || '';
 			const cardTags = Array.from(card.querySelectorAll('.tag')).map(tag => tag.textContent?.trim() || '');
 
-			// Filtrar por búsqueda de texto
 			const matchesSearch = !searchTerm ||
 				title.includes(searchTerm) ||
 				cardTags.some(tag => tag.toLowerCase().includes(searchTerm));
 
-			// Filtrar por categoría
 			const matchesCategory = !selectedCategory || category === selectedCategory;
-
-			// Filtrar por dificultad
 			const matchesDifficulty = !selectedDifficulty || difficulty.includes(selectedDifficulty);
 
-			// Filtrar por tiempo
 			const recipeTime = parseTime(timeText);
 			const matchesTime = !maxTime || recipeTime <= maxTime;
 
-			// Filtrar por tag activo
 			const matchesTag = !activeTag || cardTags.includes(activeTag);
 
-			// Mostrar u ocultar tarjeta
 			if (matchesSearch && matchesCategory && matchesDifficulty && matchesTime && matchesTag) {
 				card.style.display = 'block';
 				visibleCount++;
@@ -472,10 +476,7 @@
 			}
 		});
 
-		// Actualizar contador
 		updateResultsCount(visibleCount);
-
-		// Mostrar/ocultar botón de limpiar búsqueda
 		clearSearchBtn.style.display = searchTerm ? 'flex' : 'none';
 	}
 
@@ -532,7 +533,6 @@
 		if (tag) {
 			setActiveTag(tag);
 
-			// Abrir el panel de filtros en mobile si está cerrado
 			if (window.innerWidth < 640 && !filtersPanel.classList.contains('open')) {
 				filtersToggle.click();
 			}

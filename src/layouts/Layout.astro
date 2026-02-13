@@ -3,7 +3,7 @@ interface Props {
 	title?: string;
 }
 
-const { title = 'Mis Recetas' } = Astro.props;
+const { title = 'Fork & Commit' } = Astro.props;
 ---
 
 <!doctype html>
@@ -14,11 +14,12 @@ const { title = 'Mis Recetas' } = Astro.props;
 		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 		<link rel="icon" href="/favicon.ico" />
 		<meta name="generator" content={Astro.generator} />
+		<meta name="description" content="Fork & Commit — Colección personal de recetas donde el código se encuentra con la cocina." />
 
 		<!-- Google Fonts -->
 		<link rel="preconnect" href="https://fonts.googleapis.com">
 		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-		<link href="https://fonts.googleapis.com/css2?family=Crimson+Pro:wght@400;600;700&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+		<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Source+Serif+4:wght@400;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
 
 		<title>{title}</title>
 	</head>
@@ -37,35 +38,57 @@ const { title = 'Mis Recetas' } = Astro.props;
 		box-sizing: border-box;
 	}
 
-	/* CSS Variables - Color Palette */
+	/* CSS Variables - Fork & Commit Palette
+	   Change colors here to retheme the entire site. */
 	:root {
-		--cream: #FBF8F3;
-		--warmblack: #1C1410;
-		--terracotta: #D4754E;
-		--sage: #8B9D83;
-		--honey: #E8B55F;
-		--shadow: rgba(28, 20, 16, 0.08);
+		/* Surfaces */
+		--parchment: #EDEAE6;
+		--flour: #FFFFFF;
+		--simmer: #C5BFB7;
+
+		/* Text */
+		--cast-iron: #2F2B27;
+		--graphite: #6B6560;
+
+		/* Accent colors */
+		--ember: #FF9B51;
+		--ember-dark: #E58840;
+		--coral: #FF9B51;
+		--saffron: #FFBE82;
+		--terminal: #2F2B27;
+
+		/* Shadows (derived from accent colors) */
+		--shadow: rgba(47, 43, 39, 0.06);
+		--shadow-ember: rgba(255, 155, 81, 0.25);
+		--shadow-terminal: rgba(47, 43, 39, 0.2);
+		--shadow-card-hover: rgba(47, 43, 39, 0.08);
 	}
 
 	/* Base Styles */
 	html {
-		font-family: 'DM Sans', sans-serif;
+		font-family: 'Space Grotesk', sans-serif;
 		-webkit-font-smoothing: antialiased;
 		-moz-osx-font-smoothing: grayscale;
 	}
 
 	body {
-		background: var(--cream);
-		color: var(--warmblack);
+		background: var(--parchment);
+		color: var(--cast-iron);
 		line-height: 1.6;
 		min-height: 100vh;
 	}
 
 	/* Typography */
 	h1, h2, h3, h4, h5, h6 {
-		font-family: 'Crimson Pro', serif;
+		font-family: 'Space Grotesk', sans-serif;
 		font-weight: 700;
 		line-height: 1.2;
+	}
+
+	/* Body text in recipe content */
+	.recipe-content p,
+	.recipe-content li {
+		font-family: 'Source Serif 4', serif;
 	}
 
 	/* Smooth animations */
@@ -75,18 +98,18 @@ const { title = 'Mis Recetas' } = Astro.props;
 		}
 	}
 
-	/* Tags - Estilos compartidos */
+	/* Tags - Terminal style */
 	.tag {
-		background-color: var(--sage);
-		color: white;
-		padding: 0.4rem 1rem;
-		border-radius: 20px;
+		background-color: var(--terminal);
+		color: rgba(255, 255, 255, 0.9);
+		padding: 0.35rem 0.85rem;
+		border-radius: 4px;
 		font-size: 0.75rem;
 		font-weight: 500;
 		letter-spacing: 0.02em;
 		border: none;
 		cursor: default;
-		font-family: 'DM Sans', sans-serif;
+		font-family: 'JetBrains Mono', monospace;
 		display: inline-block;
 		text-decoration: none;
 	}
@@ -99,52 +122,55 @@ const { title = 'Mis Recetas' } = Astro.props;
 
 	.tag-clickable:hover,
 	.tag-link:hover {
-		background-color: var(--terracotta);
+		background-color: var(--ember);
+		color: white;
 		transform: translateY(-2px);
-		box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+		box-shadow: 0 2px 8px var(--shadow-ember);
 	}
 
-	/* Tag activo - destacado */
+	/* Tag activo */
 	.tag-clickable.active {
-		background-color: var(--terracotta);
-		box-shadow: 0 0 0 3px rgba(212, 117, 78, 0.3);
+		background-color: var(--ember);
+		box-shadow: 0 0 0 3px var(--shadow-ember);
 		transform: scale(1.05);
 		font-weight: 600;
+		color: white;
 	}
 
 	.tag-chip {
-		background: white;
-		border: 2px solid var(--sage);
-		color: var(--sage);
+		background: var(--flour);
+		border: 2px solid var(--terminal);
+		color: var(--terminal);
 		padding: 0.5rem 1rem;
-		border-radius: 20px;
+		border-radius: 4px;
 		font-size: 0.85rem;
 		font-weight: 500;
 		cursor: pointer;
 		transition: all 0.2s ease;
 		letter-spacing: 0.02em;
-		font-family: 'DM Sans', sans-serif;
+		font-family: 'JetBrains Mono', monospace;
 	}
 
 	.tag-chip:hover {
-		background: var(--sage);
+		background: var(--terminal);
 		color: white;
 		transform: translateY(-2px);
 	}
 
 	.tag-chip.active {
-		background: var(--sage);
+		background: var(--terminal);
 		color: white;
-		box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+		box-shadow: 0 2px 8px var(--shadow-terminal);
 	}
 
 	.tag-more {
-		background-color: var(--honey);
-		color: white;
-		padding: 0.4rem 1rem;
-		border-radius: 20px;
+		background-color: var(--saffron);
+		color: var(--cast-iron);
+		padding: 0.35rem 0.85rem;
+		border-radius: 4px;
 		font-size: 0.75rem;
 		font-weight: 600;
 		display: inline-block;
+		font-family: 'JetBrains Mono', monospace;
 	}
 </style>
