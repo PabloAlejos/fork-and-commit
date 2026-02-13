@@ -1,0 +1,147 @@
+---
+import Layout from '../layouts/Layout.astro';
+import RecipeFilters from '../components/RecipeFilters.astro';
+import RecipeCard from '../components/RecipeCard.astro';
+import { getCollection } from 'astro:content';
+
+const recipes = await getCollection('recipes');
+---
+
+<Layout>
+	<!-- Header -->
+	<header class="header">
+		<h1 class="site-title">🍽️ Mi Libro de Recetas</h1>
+		<div class="subtitle">Colección personal de cocina</div>
+	</header>
+
+	<main class="container">
+		<!-- Componente de búsqueda y filtros -->
+		<RecipeFilters />
+
+		<div class="recipes-grid">
+			{recipes.map(recipe => (
+				<RecipeCard
+					title={recipe.data.title}
+					slug={recipe.slug}
+					category={recipe.data.category}
+					totalTime={recipe.data.total_time}
+					difficulty={recipe.data.difficulty}
+					servings={recipe.data.servings}
+					tags={recipe.data.tags}
+				/>
+			))}
+		</div>
+	</main>
+</Layout>
+
+<style>
+	/* Header */
+	.header {
+		background: var(--warmblack);
+		padding: 1.5rem 2rem;
+		border-bottom: 4px solid var(--terracotta);
+		text-align: center;
+	}
+
+	.site-title {
+		font-family: 'Crimson Pro', serif;
+		font-size: 1.8rem;
+		color: var(--cream);
+		font-weight: 700;
+		letter-spacing: -0.02em;
+		margin-bottom: 0.25rem;
+	}
+
+	.subtitle {
+		color: var(--honey);
+		font-size: 0.9rem;
+		font-weight: 500;
+	}
+
+	/* Container */
+	.container {
+		max-width: 1200px;
+		margin: 0 auto;
+		padding: 2rem 1rem;
+	}
+
+	/* Recipes grid - Mobile first */
+	.recipes-grid {
+		display: grid;
+		grid-template-columns: 1fr;
+		gap: 1.5rem;
+	}
+
+	/* Tablet and up */
+	@media (min-width: 640px) {
+		.recipes-grid {
+			grid-template-columns: repeat(2, 1fr);
+		}
+	}
+
+	/* Desktop */
+	@media (min-width: 1024px) {
+		.recipes-grid {
+			grid-template-columns: repeat(3, 1fr);
+		}
+	}
+
+	/* Responsive */
+	@media (max-width: 640px) {
+		.header {
+			padding: 1rem 1.5rem;
+		}
+
+		.site-title {
+			font-size: 1.5rem;
+		}
+
+		.container {
+			padding: 1.5rem 0.75rem;
+		}
+	}
+</style>
+
+<script>
+	// Manejar clics en tags de las tarjetas
+	document.addEventListener('DOMContentLoaded', () => {
+		// Delegación de eventos para los tags clickables
+		document.addEventListener('click', (e) => {
+			const target = e.target as HTMLElement;
+
+			// Si clickaron en un tag clickable
+			if (target.classList.contains('tag-clickable')) {
+				e.preventDefault();
+				e.stopPropagation();
+
+				const tag = target.dataset.tag;
+				if (!tag) return;
+
+				// Disparar evento personalizado para que RecipeFilters lo capture
+				const event = new CustomEvent('selectTag', { detail: { tag } });
+				window.dispatchEvent(event);
+
+				// No hacer scroll si clickamos dentro de la misma vista
+			}
+
+			// Si clickaron en un link de receta, dejarlo pasar
+			if (target.closest('.recipe-card') && !target.classList.contains('tag-clickable')) {
+				// Dejar que el link funcione normalmente
+				return;
+			}
+		});
+
+		// Procesar parámetro ?tag= en la URL
+		const urlParams = new URLSearchParams(window.location.search);
+		const tagFromUrl = urlParams.get('tag');
+
+		if (tagFromUrl) {
+			// Disparar evento para seleccionar el tag
+			const event = new CustomEvent('selectTag', { detail: { tag: tagFromUrl } });
+			window.dispatchEvent(event);
+
+			// Limpiar la URL sin recargar la página
+			window.history.replaceState({}, '', window.location.pathname);
+		}
+	});
+</script>

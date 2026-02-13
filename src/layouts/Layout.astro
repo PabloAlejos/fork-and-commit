@@ -1,0 +1,150 @@
+---
+interface Props {
+	title?: string;
+}
+
+const { title = 'Mis Recetas' } = Astro.props;
+---
+
+<!doctype html>
+<html lang="es">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<link rel="icon" href="/favicon.ico" />
+		<meta name="generator" content={Astro.generator} />
+
+		<!-- Google Fonts -->
+		<link rel="preconnect" href="https://fonts.googleapis.com">
+		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+		<link href="https://fonts.googleapis.com/css2?family=Crimson+Pro:wght@400;600;700&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+
+		<title>{title}</title>
+	</head>
+	<body>
+		<slot />
+	</body>
+</html>
+
+<style is:global>
+	/* CSS Reset & Global Styles */
+	*,
+	*::before,
+	*::after {
+		margin: 0;
+		padding: 0;
+		box-sizing: border-box;
+	}
+
+	/* CSS Variables - Color Palette */
+	:root {
+		--cream: #FBF8F3;
+		--warmblack: #1C1410;
+		--terracotta: #D4754E;
+		--sage: #8B9D83;
+		--honey: #E8B55F;
+		--shadow: rgba(28, 20, 16, 0.08);
+	}
+
+	/* Base Styles */
+	html {
+		font-family: 'DM Sans', sans-serif;
+		-webkit-font-smoothing: antialiased;
+		-moz-osx-font-smoothing: grayscale;
+	}
+
+	body {
+		background: var(--cream);
+		color: var(--warmblack);
+		line-height: 1.6;
+		min-height: 100vh;
+	}
+
+	/* Typography */
+	h1, h2, h3, h4, h5, h6 {
+		font-family: 'Crimson Pro', serif;
+		font-weight: 700;
+		line-height: 1.2;
+	}
+
+	/* Smooth animations */
+	@media (prefers-reduced-motion: no-preference) {
+		html {
+			scroll-behavior: smooth;
+		}
+	}
+
+	/* Tags - Estilos compartidos */
+	.tag {
+		background-color: var(--sage);
+		color: white;
+		padding: 0.4rem 1rem;
+		border-radius: 20px;
+		font-size: 0.75rem;
+		font-weight: 500;
+		letter-spacing: 0.02em;
+		border: none;
+		cursor: default;
+		font-family: 'DM Sans', sans-serif;
+		display: inline-block;
+		text-decoration: none;
+	}
+
+	.tag-clickable,
+	.tag-link {
+		cursor: pointer;
+		transition: all 0.2s ease;
+	}
+
+	.tag-clickable:hover,
+	.tag-link:hover {
+		background-color: var(--terracotta);
+		transform: translateY(-2px);
+		box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+	}
+
+	/* Tag activo - destacado */
+	.tag-clickable.active {
+		background-color: var(--terracotta);
+		box-shadow: 0 0 0 3px rgba(212, 117, 78, 0.3);
+		transform: scale(1.05);
+		font-weight: 600;
+	}
+
+	.tag-chip {
+		background: white;
+		border: 2px solid var(--sage);
+		color: var(--sage);
+		padding: 0.5rem 1rem;
+		border-radius: 20px;
+		font-size: 0.85rem;
+		font-weight: 500;
+		cursor: pointer;
+		transition: all 0.2s ease;
+		letter-spacing: 0.02em;
+		font-family: 'DM Sans', sans-serif;
+	}
+
+	.tag-chip:hover {
+		background: var(--sage);
+		color: white;
+		transform: translateY(-2px);
+	}
+
+	.tag-chip.active {
+		background: var(--sage);
+		color: white;
+		box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+	}
+
+	.tag-more {
+		background-color: var(--honey);
+		color: white;
+		padding: 0.4rem 1rem;
+		border-radius: 20px;
+		font-size: 0.75rem;
+		font-weight: 600;
+		display: inline-block;
+	}
+</style>

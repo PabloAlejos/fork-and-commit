@@ -1,0 +1,541 @@
+---
+// Este componente no necesita props, ya que el filtrado se hace en el cliente
+---
+
+<div class="filters-container">
+	<!-- Barra de búsqueda -->
+	<div class="search-bar">
+		<span class="search-icon">🔍</span>
+		<input
+			type="text"
+			id="search-input"
+			placeholder="Buscar recetas..."
+			class="search-input"
+		/>
+		<button id="clear-search" class="clear-btn" style="display: none;">✕</button>
+	</div>
+
+	<!-- Toggle de filtros para mobile -->
+	<button id="filters-toggle" class="filters-toggle">
+		<span>Filtros</span>
+		<span class="toggle-icon">▼</span>
+	</button>
+
+	<!-- Panel de filtros -->
+	<div id="filters-panel" class="filters-panel">
+		<!-- Indicador de tag activo -->
+		<div id="active-tag-indicator" class="active-tag-indicator" style="display: none;">
+			<span class="active-tag-label">Filtrando por:</span>
+			<span id="active-tag-text" class="active-tag-badge"></span>
+			<button id="clear-active-tag" class="clear-tag-btn" title="Quitar filtro">✕</button>
+		</div>
+
+		<div class="filters-grid">
+			<!-- Filtro por Categoría -->
+			<div class="filter-group">
+				<label class="filter-label">Categoría</label>
+				<select id="filter-category" class="filter-select">
+					<option value="">Todas</option>
+				</select>
+			</div>
+
+			<!-- Filtro por Dificultad -->
+			<div class="filter-group">
+				<label class="filter-label">Dificultad</label>
+				<select id="filter-difficulty" class="filter-select">
+					<option value="">Todas</option>
+					<option value="Fácil">Fácil</option>
+					<option value="Media">Media</option>
+					<option value="Difícil">Difícil</option>
+				</select>
+			</div>
+
+			<!-- Filtro por Tiempo -->
+			<div class="filter-group">
+				<label class="filter-label">Tiempo máximo</label>
+				<select id="filter-time" class="filter-select">
+					<option value="">Cualquiera</option>
+					<option value="30">Hasta 30 min</option>
+					<option value="60">Hasta 1 hora</option>
+					<option value="90">Hasta 1.5 horas</option>
+				</select>
+			</div>
+		</div>
+
+		<!-- Botón para limpiar filtros -->
+		<button id="clear-filters" class="clear-filters-btn">
+			Limpiar filtros
+		</button>
+	</div>
+
+	<!-- Contador de resultados -->
+	<div id="results-count" class="results-count"></div>
+</div>
+
+<style>
+	.filters-container {
+		margin-bottom: 2rem;
+	}
+
+	/* Barra de búsqueda */
+	.search-bar {
+		position: relative;
+		display: flex;
+		align-items: center;
+		background: white;
+		border-radius: 12px;
+		box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+		padding: 0.75rem 1rem;
+		margin-bottom: 1rem;
+	}
+
+	.search-icon {
+		font-size: 1.25rem;
+		margin-right: 0.75rem;
+		color: var(--sage);
+	}
+
+	.search-input {
+		flex: 1;
+		border: none;
+		outline: none;
+		font-size: 1rem;
+		font-family: 'DM Sans', sans-serif;
+		color: var(--warmblack);
+		background: transparent;
+	}
+
+	.search-input::placeholder {
+		color: #95a5a6;
+	}
+
+	.clear-btn {
+		background: var(--terracotta);
+		color: white;
+		border: none;
+		border-radius: 50%;
+		width: 24px;
+		height: 24px;
+		cursor: pointer;
+		font-size: 0.875rem;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		transition: background 0.2s;
+	}
+
+	.clear-btn:hover {
+		background: #c06642;
+	}
+
+	/* Toggle de filtros (mobile) */
+	.filters-toggle {
+		width: 100%;
+		background: white;
+		border: 2px solid var(--sage);
+		border-radius: 12px;
+		padding: 0.875rem 1rem;
+		font-size: 1rem;
+		font-weight: 600;
+		color: var(--warmblack);
+		cursor: pointer;
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		transition: all 0.3s ease;
+		margin-bottom: 1rem;
+	}
+
+	.filters-toggle:hover {
+		background: var(--sage);
+		color: white;
+	}
+
+	.toggle-icon {
+		transition: transform 0.3s ease;
+		font-size: 0.875rem;
+	}
+
+	.filters-toggle.active .toggle-icon {
+		transform: rotate(180deg);
+	}
+
+	/* Panel de filtros */
+	.filters-panel {
+		background: white;
+		border-radius: 12px;
+		box-shadow: 0 0 0 rgba(0, 0, 0, 0);
+		padding: 0 1.5rem;
+		margin-bottom: 0;
+		max-height: 0;
+		overflow: hidden;
+		transition: max-height 0.3s ease, padding 0.3s ease, box-shadow 0.3s ease, margin-bottom 0.3s ease;
+	}
+
+	.filters-panel.open {
+		max-height: 500px;
+		padding: 1.5rem;
+		margin-bottom: 1rem;
+		box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+	}
+
+	.filters-panel.desktop-visible {
+		max-height: none;
+		padding: 1.5rem;
+		margin-bottom: 1rem;
+		box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+	}
+
+	/* Active tag indicator */
+	.active-tag-indicator {
+		background: linear-gradient(135deg, var(--terracotta), #e88f6f);
+		border-radius: 12px;
+		padding: 1rem 1.25rem;
+		margin-bottom: 1.5rem;
+		display: flex;
+		align-items: center;
+		gap: 0.75rem;
+		box-shadow: 0 4px 12px rgba(212, 117, 78, 0.25);
+		animation: slideDown 0.3s ease;
+	}
+
+	@keyframes slideDown {
+		from {
+			opacity: 0;
+			transform: translateY(-10px);
+		}
+		to {
+			opacity: 1;
+			transform: translateY(0);
+		}
+	}
+
+	.active-tag-label {
+		color: white;
+		font-size: 0.875rem;
+		font-weight: 600;
+		text-transform: uppercase;
+		letter-spacing: 0.5px;
+	}
+
+	.active-tag-badge {
+		background: white;
+		color: var(--terracotta);
+		padding: 0.4rem 1rem;
+		border-radius: 20px;
+		font-size: 0.875rem;
+		font-weight: 600;
+		flex: 1;
+	}
+
+	.clear-tag-btn {
+		background: rgba(255, 255, 255, 0.2);
+		border: 2px solid white;
+		color: white;
+		border-radius: 50%;
+		width: 28px;
+		height: 28px;
+		cursor: pointer;
+		font-size: 1rem;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		transition: all 0.2s;
+		font-weight: bold;
+	}
+
+	.clear-tag-btn:hover {
+		background: white;
+		color: var(--terracotta);
+		transform: rotate(90deg);
+	}
+
+	.filters-grid {
+		display: grid;
+		grid-template-columns: 1fr;
+		gap: 1.25rem;
+		margin-bottom: 1.25rem;
+	}
+
+	.filter-group {
+		display: flex;
+		flex-direction: column;
+		gap: 0.5rem;
+	}
+
+	.filter-label {
+		font-size: 0.875rem;
+		font-weight: 600;
+		color: var(--warmblack);
+		text-transform: uppercase;
+		letter-spacing: 0.5px;
+	}
+
+	.filter-select {
+		padding: 0.75rem;
+		border: 2px solid #ecf0f1;
+		border-radius: 8px;
+		font-size: 1rem;
+		font-family: 'DM Sans', sans-serif;
+		color: var(--warmblack);
+		background: white;
+		cursor: pointer;
+		transition: border-color 0.2s;
+	}
+
+	.filter-select:focus {
+		outline: none;
+		border-color: var(--sage);
+	}
+
+	.clear-filters-btn {
+		width: 100%;
+		padding: 0.75rem;
+		background: var(--honey);
+		color: white;
+		border: none;
+		border-radius: 8px;
+		font-weight: 600;
+		cursor: pointer;
+		transition: background 0.2s;
+	}
+
+	.clear-filters-btn:hover {
+		background: #d9a44e;
+	}
+
+	/* Contador de resultados */
+	.results-count {
+		text-align: center;
+		color: var(--sage);
+		font-size: 0.875rem;
+		font-weight: 500;
+		margin-bottom: 1rem;
+	}
+
+	/* Tablet y Desktop */
+	@media (min-width: 640px) {
+		.filters-toggle {
+			display: none;
+		}
+
+		.filters-panel {
+			max-height: none;
+			padding: 1.5rem;
+		}
+
+		.filters-grid {
+			grid-template-columns: repeat(3, 1fr);
+		}
+	}
+
+	@media (min-width: 1024px) {
+		.filters-grid {
+			grid-template-columns: repeat(4, 1fr);
+			gap: 1.5rem;
+		}
+	}
+</style>
+
+<script>
+	// Obtener referencias a elementos
+	const searchInput = document.getElementById('search-input') as HTMLInputElement;
+	const clearSearchBtn = document.getElementById('clear-search') as HTMLButtonElement;
+	const filtersToggle = document.getElementById('filters-toggle') as HTMLButtonElement;
+	const filtersPanel = document.getElementById('filters-panel') as HTMLDivElement;
+	const filterCategory = document.getElementById('filter-category') as HTMLSelectElement;
+	const filterDifficulty = document.getElementById('filter-difficulty') as HTMLSelectElement;
+	const filterTime = document.getElementById('filter-time') as HTMLSelectElement;
+	const clearFiltersBtn = document.getElementById('clear-filters') as HTMLButtonElement;
+	const resultsCount = document.getElementById('results-count') as HTMLDivElement;
+	const activeTagIndicator = document.getElementById('active-tag-indicator') as HTMLDivElement;
+	const activeTagText = document.getElementById('active-tag-text') as HTMLSpanElement;
+	const clearActiveTagBtn = document.getElementById('clear-active-tag') as HTMLButtonElement;
+	const recipeCards = document.querySelectorAll('.recipe-card') as NodeListOf<HTMLElement>;
+
+	// Estado del tag activo
+	let activeTag: string | null = null;
+
+	// Poblar opciones de categoría dinámicamente
+	const categories = new Set<string>();
+	recipeCards.forEach(card => {
+		const category = card.querySelector('.category')?.textContent?.trim();
+		if (category) categories.add(category);
+	});
+	categories.forEach(category => {
+		const option = document.createElement('option');
+		option.value = category;
+		option.textContent = category;
+		filterCategory.appendChild(option);
+	});
+
+	// Actualizar apariencia de tags en las tarjetas
+	function updateTagsAppearance() {
+		// Actualizar tags en las tarjetas
+		recipeCards.forEach(card => {
+			const tagButtons = card.querySelectorAll('.tag-clickable');
+			tagButtons.forEach(tagBtn => {
+				const tagText = (tagBtn as HTMLElement).dataset.tag;
+				if (tagText === activeTag) {
+					tagBtn.classList.add('active');
+				} else {
+					tagBtn.classList.remove('active');
+				}
+			});
+		});
+
+		// Actualizar indicador visual
+		if (activeTag) {
+			activeTagText.textContent = activeTag;
+			activeTagIndicator.style.display = 'flex';
+		} else {
+			activeTagIndicator.style.display = 'none';
+		}
+	}
+
+	// Seleccionar/deseleccionar tag
+	function setActiveTag(tag: string | null) {
+		if (activeTag === tag) {
+			// Si clickas el mismo tag, lo deseleccionas
+			activeTag = null;
+		} else {
+			activeTag = tag;
+		}
+		updateTagsAppearance();
+		filterRecipes();
+	}
+
+	// Botón para limpiar tag activo
+	clearActiveTagBtn?.addEventListener('click', () => {
+		activeTag = null;
+		updateTagsAppearance();
+		filterRecipes();
+	});
+
+	// Toggle de panel de filtros (mobile)
+	filtersToggle?.addEventListener('click', () => {
+		filtersToggle.classList.toggle('active');
+		filtersPanel.classList.toggle('open');
+	});
+
+	// Función para parsear tiempo en minutos
+	function parseTime(timeString: string): number {
+		const match = timeString.match(/(\d+)/);
+		if (!match) return 999;
+		const value = parseInt(match[1]);
+		if (timeString.includes('hora')) {
+			return value * 60;
+		}
+		return value;
+	}
+
+	// Función de filtrado
+	function filterRecipes() {
+		const searchTerm = searchInput.value.toLowerCase().trim();
+		const selectedCategory = filterCategory.value;
+		const selectedDifficulty = filterDifficulty.value;
+		const maxTime = filterTime.value ? parseInt(filterTime.value) : null;
+
+		let visibleCount = 0;
+
+		recipeCards.forEach(card => {
+			const title = card.querySelector('h2')?.textContent?.toLowerCase() || '';
+			const category = card.querySelector('.category')?.textContent?.trim() || '';
+			const difficulty = card.querySelector('.card-meta .meta-item:nth-child(2)')?.textContent?.trim() || '';
+			const timeText = card.querySelector('.card-meta .meta-item:first-child')?.textContent?.trim() || '';
+			const cardTags = Array.from(card.querySelectorAll('.tag')).map(tag => tag.textContent?.trim() || '');
+
+			// Filtrar por búsqueda de texto
+			const matchesSearch = !searchTerm ||
+				title.includes(searchTerm) ||
+				cardTags.some(tag => tag.toLowerCase().includes(searchTerm));
+
+			// Filtrar por categoría
+			const matchesCategory = !selectedCategory || category === selectedCategory;
+
+			// Filtrar por dificultad
+			const matchesDifficulty = !selectedDifficulty || difficulty.includes(selectedDifficulty);
+
+			// Filtrar por tiempo
+			const recipeTime = parseTime(timeText);
+			const matchesTime = !maxTime || recipeTime <= maxTime;
+
+			// Filtrar por tag activo
+			const matchesTag = !activeTag || cardTags.includes(activeTag);
+
+			// Mostrar u ocultar tarjeta
+			if (matchesSearch && matchesCategory && matchesDifficulty && matchesTime && matchesTag) {
+				card.style.display = 'block';
+				visibleCount++;
+			} else {
+				card.style.display = 'none';
+			}
+		});
+
+		// Actualizar contador
+		updateResultsCount(visibleCount);
+
+		// Mostrar/ocultar botón de limpiar búsqueda
+		clearSearchBtn.style.display = searchTerm ? 'flex' : 'none';
+	}
+
+	// Actualizar contador de resultados
+	function updateResultsCount(count: number) {
+		if (count === recipeCards.length) {
+			resultsCount.textContent = `${count} recetas`;
+		} else {
+			resultsCount.textContent = `${count} de ${recipeCards.length} recetas`;
+		}
+	}
+
+	// Event listeners para filtros
+	searchInput?.addEventListener('input', filterRecipes);
+	filterCategory?.addEventListener('change', filterRecipes);
+	filterDifficulty?.addEventListener('change', filterRecipes);
+	filterTime?.addEventListener('change', filterRecipes);
+
+	// Limpiar búsqueda
+	clearSearchBtn?.addEventListener('click', () => {
+		searchInput.value = '';
+		filterRecipes();
+	});
+
+	// Limpiar todos los filtros
+	clearFiltersBtn?.addEventListener('click', () => {
+		searchInput.value = '';
+		filterCategory.value = '';
+		filterDifficulty.value = '';
+		filterTime.value = '';
+		activeTag = null;
+		updateTagsAppearance();
+		filterRecipes();
+	});
+
+	// Inicializar contador
+	updateResultsCount(recipeCards.length);
+
+	// En desktop, mostrar filtros siempre
+	function checkScreenSize() {
+		if (window.innerWidth >= 640) {
+			filtersPanel.classList.add('desktop-visible');
+		} else {
+			filtersPanel.classList.remove('desktop-visible');
+		}
+	}
+
+	checkScreenSize();
+	window.addEventListener('resize', checkScreenSize);
+
+	// Escuchar evento de selección de tag desde tarjetas
+	window.addEventListener('selectTag', ((e: CustomEvent) => {
+		const tag = e.detail?.tag;
+		if (tag) {
+			setActiveTag(tag);
+
+			// Abrir el panel de filtros en mobile si está cerrado
+			if (window.innerWidth < 640 && !filtersPanel.classList.contains('open')) {
+				filtersToggle.click();
+			}
+		}
+	}) as EventListener);
+</script>

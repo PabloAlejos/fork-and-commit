@@ -1,0 +1,337 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { getCollection } from 'astro:content';
+
+// This function generates one static page for each recipe
+export async function getStaticPaths() {
+  const recipes = await getCollection('recipes');
+
+  return recipes.map(recipe => ({
+    params: { slug: recipe.slug },
+    props: { recipe },
+  }));
+}
+
+// Get the recipe from props
+const { recipe } = Astro.props;
+
+// Render the markdown content
+const { Content } = await recipe.render();
+---
+
+<Layout title={recipe.data.title}>
+  <!-- Header -->
+  <header class="header">
+    <div class="header-content">
+      <a href="/" class="back-link">← Volver a recetas</a>
+      <h1 class="site-title">🍽️ Mi Libro de Recetas</h1>
+      <div class="subtitle">Colección personal de cocina</div>
+    </div>
+  </header>
+
+  <!-- Main content -->
+  <div class="container">
+    <!-- Recipe header -->
+    <div class="recipe-header">
+      <h1 class="recipe-title">{recipe.data.title}</h1>
+
+      <div class="meta-grid">
+        <div class="meta-item">
+          <div class="meta-label">Dificultad</div>
+          <div class="meta-value">{recipe.data.difficulty}</div>
+        </div>
+        <div class="meta-item">
+          <div class="meta-label">Tiempo Total</div>
+          <div class="meta-value">{recipe.data.total_time}</div>
+        </div>
+        <div class="meta-item">
+          <div class="meta-label">Tiempo Activo</div>
+          <div class="meta-value">{recipe.data.active_time}</div>
+        </div>
+        <div class="meta-item">
+          <div class="meta-label">Raciones</div>
+          <div class="meta-value">{recipe.data.servings} personas</div>
+        </div>
+      </div>
+
+      {recipe.data.tags && recipe.data.tags.length > 0 && (
+        <div class="tags">
+          {recipe.data.tags.map(tag => (
+            <a href={`/?tag=${encodeURIComponent(tag)}`} class="tag tag-link">{tag}</a>
+          ))}
+        </div>
+      )}
+    </div>
+
+    <!-- Recipe content -->
+    <article class="recipe-content">
+      <Content />
+    </article>
+  </div>
+</Layout>
+
+<style>
+  /* Header */
+  .header {
+    background: var(--warmblack);
+    padding: 1.5rem 2rem;
+    border-bottom: 4px solid var(--terracotta);
+  }
+
+  .header-content {
+    max-width: 900px;
+    margin: 0 auto;
+  }
+
+  .back-link {
+    display: inline-block;
+    color: var(--honey);
+    text-decoration: none;
+    margin-bottom: 1rem;
+    font-size: 0.9rem;
+    transition: color 0.2s ease;
+  }
+
+  .back-link:hover {
+    color: var(--terracotta);
+  }
+
+  .site-title {
+    font-family: 'Crimson Pro', serif;
+    font-size: 1.8rem;
+    color: var(--cream);
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    margin-bottom: 0.25rem;
+  }
+
+  .subtitle {
+    color: var(--honey);
+    font-size: 0.9rem;
+    font-weight: 500;
+  }
+
+  /* Container */
+  .container {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 3rem 1.5rem;
+  }
+
+  /* Recipe header */
+  .recipe-header {
+    margin-bottom: 3rem;
+    border-bottom: 2px solid var(--terracotta);
+    padding-bottom: 2rem;
+    animation: fadeInUp 0.6s ease;
+  }
+
+  .recipe-title {
+    font-family: 'Crimson Pro', serif;
+    font-size: 3rem;
+    font-weight: 700;
+    color: var(--warmblack);
+    line-height: 1.1;
+    margin-bottom: 1.5rem;
+    letter-spacing: -0.03em;
+  }
+
+  /* Meta grid */
+  .meta-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 1rem;
+    margin: 1.5rem 0;
+  }
+
+  .meta-item {
+    background: white;
+    padding: 1rem;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px var(--shadow);
+  }
+
+  .meta-label {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--terracotta);
+    font-weight: 700;
+    margin-bottom: 0.25rem;
+  }
+
+  .meta-value {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--warmblack);
+  }
+
+  /* Tags */
+  .tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 1.5rem;
+  }
+
+  /* Ajuste de tamaño para página de detalle */
+  .tags .tag {
+    font-size: 0.85rem;
+  }
+
+  /* Recipe content */
+  .recipe-content {
+    animation: fadeInUp 0.6s ease 0.2s both;
+  }
+
+  /* Markdown content styling */
+  .recipe-content :global(h2) {
+    font-family: 'Crimson Pro', serif;
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: var(--warmblack);
+    margin: 3rem 0 1.5rem 0;
+    border-left: 4px solid var(--terracotta);
+    padding-left: 1rem;
+  }
+
+  .recipe-content :global(h3) {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--terracotta);
+    margin: 1.5rem 0 1rem 0;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-size: 0.9rem;
+  }
+
+  .recipe-content :global(p) {
+    margin-bottom: 1rem;
+    line-height: 1.7;
+    color: #555;
+  }
+
+  .recipe-content :global(ul),
+  .recipe-content :global(ol) {
+    margin: 1rem 0 1.5rem 1.5rem;
+    line-height: 1.7;
+  }
+
+  .recipe-content :global(li) {
+    margin-bottom: 0.5rem;
+    color: #555;
+  }
+
+  .recipe-content :global(strong) {
+    color: var(--terracotta);
+    font-weight: 700;
+  }
+
+  .recipe-content :global(code) {
+    background: var(--sage);
+    color: white;
+    padding: 0.2rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.9em;
+  }
+
+  /* Blockquotes for notes - Notepad style */
+  .recipe-content :global(blockquote) {
+    background: linear-gradient(
+      to bottom,
+      #fafafa 0%,
+      #ffffff 8%,
+      #ffffff 100%
+    );
+    border: 1px solid #e0e0e0;
+    border-left: 3px solid var(--terracotta);
+    padding: 1.5rem 1.5rem 1.5rem 2rem;
+    margin: 2rem 0;
+    border-radius: 4px;
+    box-shadow:
+      0 1px 3px rgba(0, 0, 0, 0.05),
+      0 2px 8px rgba(0, 0, 0, 0.03);
+    position: relative;
+    /* Subtle lines like a notepad */
+    background-image:
+      linear-gradient(
+        to bottom,
+        transparent 0%,
+        transparent calc(100% - 1px),
+        #f5f5f5 calc(100% - 1px),
+        #f5f5f5 100%
+      );
+    background-size: 100% 1.7rem;
+    background-position: 0 1.5rem;
+  }
+
+  .recipe-content :global(blockquote)::before {
+    content: "📝";
+    position: absolute;
+    left: 0.5rem;
+    top: 0.5rem;
+    font-size: 1rem;
+    opacity: 0.6;
+  }
+
+  .recipe-content :global(blockquote p) {
+    color: #333;
+    position: relative;
+    z-index: 1;
+  }
+
+  .recipe-content :global(blockquote strong) {
+    color: var(--warmblack);
+  }
+
+  /* Animations */
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    .recipe-title {
+      font-size: 2rem;
+    }
+
+    .container {
+      padding: 2rem 1rem;
+    }
+
+    .meta-grid {
+      grid-template-columns: 1fr 1fr;
+    }
+
+    .header {
+      padding: 1rem 1.5rem;
+    }
+
+    .site-title {
+      font-size: 1.5rem;
+    }
+  }
+
+  /* Print styles for kitchen use */
+  @media print {
+    .header {
+      display: none;
+    }
+
+    .container {
+      max-width: 100%;
+      padding: 0;
+    }
+
+    .recipe-content :global(h2) {
+      page-break-before: always;
+    }
+  }
+</style>
