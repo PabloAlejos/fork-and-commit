@@ -1,46 +1,40 @@
-# Astro Starter Kit: Basics
+# Fork & Commit
 
-```sh
-bun create astro@latest -- --template basics
+Colección personal de recetas de cocina, construida con Astro y desplegada en GitHub Pages.
+
+**Live:** [pabloalejos.github.io/fork-and-commit](https://pabloalejos.github.io/fork-and-commit)
+
+## Stack
+
+- [Astro](https://astro.build) v5 — generación estática
+- [Bun](https://bun.sh) — runtime y package manager
+- GitHub Actions — CI/CD automático a GitHub Pages
+
+## Estructura
+
+```
+src/
+├── content/recipes/   # Recetas en Markdown (content collections)
+├── pages/
+│   ├── index.astro    # Listado con búsqueda y filtros
+│   └── recipes/
+│       └── [slug].astro  # Página de detalle por receta
+├── components/
+│   ├── RecipeCard.astro
+│   └── RecipeFilters.astro
+└── layouts/
+    └── Layout.astro
 ```
 
-> 🧑‍🚀 **Seasoned astronaut?** Delete this file. Have fun!
+## Añadir una receta
 
-## 🚀 Project Structure
+Crea un archivo `.md` en `src/content/recipes/` con el frontmatter correspondiente (title, difficulty, total_time, active_time, servings, tags, category). Al hacer push a `main`, se despliega automáticamente.
 
-Inside of your Astro project, you'll see the following folders and files:
+## Comandos
 
-```text
-/
-├── public/
-│   └── favicon.svg
-├── src
-│   ├── assets
-│   │   └── astro.svg
-│   ├── components
-│   │   └── Welcome.astro
-│   ├── layouts
-│   │   └── Layout.astro
-│   └── pages
-│       └── index.astro
-└── package.json
-```
-
-To learn more about the folder structure of an Astro project, refer to [our guide on project structure](https://docs.astro.build/en/basics/project-structure/).
-
-## 🧞 Commands
-
-All commands are run from the root of the project, from a terminal:
-
-| Command                   | Action                                           |
-| :------------------------ | :----------------------------------------------- |
-| `bun install`             | Installs dependencies                            |
-| `bun dev`             | Starts local dev server at `localhost:4321`      |
-| `bun build`           | Build your production site to `./dist/`          |
-| `bun preview`         | Preview your build locally, before deploying     |
-| `bun astro ...`       | Run CLI commands like `astro add`, `astro check` |
-| `bun astro -- --help` | Get help using the Astro CLI                     |
-
-## 👀 Want to learn more?
-
-Feel free to check [our documentation](https://docs.astro.build) or jump into our [Discord server](https://astro.build/chat).
+| Comando           | Acción                                  |
+| :---------------- | :-------------------------------------- |
+| `bun install`     | Instalar dependencias                   |
+| `bun dev`         | Servidor local en `localhost:4321`      |
+| `bun build`       | Build de producción en `./dist/`        |
+| `bun preview`     | Preview del build antes de desplegar    |
