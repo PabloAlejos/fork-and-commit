@@ -1,6 +1,7 @@
 ---
 import Layout from '../../layouts/Layout.astro';
 import { getCollection } from 'astro:content';
+import { Image } from 'astro:assets';
 
 // This function generates one static page for each recipe
 export async function getStaticPaths() {
@@ -34,6 +35,17 @@ const { Content } = await recipe.render();
   <div class="container">
     <!-- Recipe header -->
     <div class="recipe-header">
+      {recipe.data.image && (
+        <div class="recipe-hero">
+          <Image
+            src={recipe.data.image}
+            alt={recipe.data.title}
+            class="recipe-hero-img"
+            widths={[400, 800, 1200]}
+            sizes="(max-width: 640px) 100vw, 900px"
+          />
+        </div>
+      )}
       <h1 class="recipe-title">{recipe.data.title}</h1>
 
       <div class="meta-grid">
@@ -147,6 +159,27 @@ const { Content } = await recipe.render();
     max-width: 900px;
     margin: 0 auto;
     padding: 3rem 1.5rem;
+  }
+
+  /* Recipe hero image */
+  .recipe-hero {
+    margin-bottom: 2rem;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 4px 16px var(--shadow);
+  }
+
+  .recipe-hero-img {
+    width: 100%;
+    height: 320px;
+    object-fit: cover;
+    display: block;
+  }
+
+  @media (max-width: 640px) {
+    .recipe-hero-img {
+      height: 220px;
+    }
   }
 
   /* Recipe header */

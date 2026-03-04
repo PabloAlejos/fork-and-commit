@@ -6,7 +6,8 @@ const recipesCollection = defineCollection({
   // Tipo de contenido (casi siempre 'content' para Markdown/MDX)
   type: 'content',
   // Schema: define qué campos tiene cada entrada y su tipo
-  schema: z.object({
+  // Usamos función para acceder al helper image() de Astro (optimización automática)
+  schema: ({ image }) => z.object({
     title: z.string(),
     tags: z.array(z.string()).optional(),
     difficulty: z.string(), // Aqui lo voy a dejar sin enum por si acaso
@@ -16,6 +17,7 @@ const recipesCollection = defineCollection({
     category: z.string(),
     shopping_list: z.array(z.string()).optional(),
     date: z.date(),
+    image: image().optional(),
   }),
 });
 
