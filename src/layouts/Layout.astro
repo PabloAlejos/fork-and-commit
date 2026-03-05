@@ -11,8 +11,10 @@ const { title = 'Fork & Commit' } = Astro.props;
 	<head>
 		<meta charset="UTF-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-		<link rel="icon" href="/favicon.ico" />
+		<link rel="icon" type="image/svg+xml" href={`${import.meta.env.BASE_URL}favicon.svg`} />
+		<link rel="icon" href={`${import.meta.env.BASE_URL}favicon.ico`} />
+		<link rel="apple-touch-icon" href={`${import.meta.env.BASE_URL}apple-touch-icon.png`} />
+		<link rel="manifest" href={`${import.meta.env.BASE_URL}manifest.json`} />
 		<meta name="generator" content={Astro.generator} />
 		<meta name="description" content="Fork & Commit — Colección personal de recetas donde el código se encuentra con la cocina." />
 

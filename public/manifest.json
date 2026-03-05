@@ -1,0 +1,21 @@
+{
+  "name": "Fork & Commit",
+  "short_name": "Fork & Commit",
+  "description": "Colección personal de recetas donde el código se encuentra con la cocina.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#EDEAE6",
+  "theme_color": "#FF9B51",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
