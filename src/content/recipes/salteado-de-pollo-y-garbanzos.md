@@ -1,7 +1,7 @@
 -----
 
 ## title: “Salteado de Pollo y Garbanzos”
-tags: [pollo, garbanzos, legumbres, mediterráneo, saludable, rápido, alto-proteína]
+tags: [“pollo”, “garbanzos”, “legumbres”, “mediterraneo”, “saludable”, “rapido”, “alto-proteina”]
 difficulty: “Fácil”
 total_time: “25 min”
 active_time: “20 min”
@@ -14,7 +14,7 @@ date: 2026-04-01
 
 ## Ingredientes (1 persona)
 
-- 200g pechuga de pollo, en dados
+- 150g pechuga de pollo, en dados
 - 200g garbanzos cocidos (bote escurrido)
 - ½ pimiento rojo o verde
 - Un puñado de tomates cherry (unos 8-10)
@@ -65,6 +65,7 @@ Directo de la sartén al plato. Terminar con un chorrito de limón y **Tajín al
 
 ## Notas
 
+- **Proteína aproximada**: ~60g (pollo + garbanzos), ideal post-entreno
 - **Garbanzos secos**: la clave para que no queden blandos es secarlos bien antes de saltear — papel de cocina y sartén bien caliente
 - **Tajín**: ponlo siempre al final, en crudo. Es el toque que marca la diferencia
 - **Variante picante**: añade una guindilla seca o una punta de cayena con el ajo
