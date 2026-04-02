@@ -40,19 +40,19 @@ date: 2026-02-05
 
 ## Elaboración
 
-**Paso 1: Salar los pepinos (30 min)**
+### Paso 1: Salar los pepinos (30 min)
 
 Lava los pepinos y sécalos. Córtalos por la mitad longitudinalmente y luego en forma de medias lunas muy finas. En un cuenco mezcla el pepino con la sal. Reserva 30 minutos.
 
 Este paso extrae el exceso de agua del pepino y lo mantiene crujiente durante la fermentación.
 
-**Paso 2: Preparar la mezcla de condimentos**
+### Paso 2: Preparar la mezcla de condimentos
 
 En un cuenco mezcla el resto de ingredientes, menos las semillas de sésamo. Escurre el líquido del pepino e incorpóralo al cuenco. Con cuidado combina bien. Cubre y refrigera al menos media hora, hasta que esté frío.
 
 **Importante**: El pepino persa (más pequeño y grueso) es perfecto para esta receta ya que contiene menos agua y aporta un sabor más pronunciado. Si no lo encuentras, usa pepino corriente, pero tendrá más agua.
 
-**Paso 3: Decorar y servir**
+### Paso 3: Decorar y servir
 
 Decora con las semillas de sésamo y sirve. En un recipiente hermético se conservará hasta una semana en el frigorífico.
 

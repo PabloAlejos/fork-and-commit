@@ -8,6 +8,7 @@ servings: 2
 category: "Plato principal"
 shopping_list: [setas de cardo, humo líquido, salsa barbacoa, pan brioche, repollo]
 date: 2026-03-04
+image: ./pulled-pork-setas-cardo.jpg
 ---
 
 # Pulled Pork de Setas de Cardo

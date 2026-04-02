@@ -2,8 +2,8 @@
 title: "Curry Golden Vegetariano con Shiitake"
 tags: [vegetariano, japonés, curry, arroz, umami, reconfortante]
 difficulty: "Media"
-total_time: "45 minutos"
-active_time: "20 minutos"
+total_time: "45 min"
+active_time: "20 min"
 servings: 2
 category: "Plato principal"
 shopping_list: [pastillas Golden Curry, shiitake, arroz japonés]

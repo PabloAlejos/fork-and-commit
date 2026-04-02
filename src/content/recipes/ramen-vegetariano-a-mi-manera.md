@@ -2,8 +2,8 @@
 title: "Ramen Vegetariano de Setas con Tare de Miso y Gochujang"
 tags: [japonés, ramen, vegetariano, setas, picante, fermentación]
 difficulty: "Media"
-total_time: "2 horas 30 min"
-active_time: "1 hora"
+total_time: "2 h 30 min"
+active_time: "1 h"
 servings: 4
 category: "Plato principal"
 shopping_list: [kombu, shiitake deshidratado, setas de ostra, shiitake fresco, champiñón portobello, miso blanco, gochujang, leche de avena, mirin, sake, fideos ramen, tofu firme, pak choi, nori, manzana]
