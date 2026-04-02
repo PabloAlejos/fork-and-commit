@@ -1,16 +1,18 @@
 -----
 
-## title: “Salteado de Pollo y Garbanzos”
-tags: [“pollo”, “garbanzos”, “legumbres”, “mediterraneo”, “saludable”, “rapido”, “alto-proteina”]
+## title: “Salteado de Pollo y Garbanzos con Tajín”
+tags: [pollo, garbanzos, mediterráneo, saludable, rápido, alto-proteína]
 difficulty: “Fácil”
 total_time: “25 min”
 active_time: “20 min”
 servings: 1
 category: “Plato principal”
-shopping_list: [pechuga de pollo, garbanzos cocidos, pimiento, tomate cherry]
-date: 2026-04-01
+shopping_list: [pechuga de pollo, garbanzos cocidos, pimiento, tomate cherry, Tajín]
+date: 2026-04-02
 
-# Salteado de Pollo y Garbanzos
+# Salteado de Pollo y Garbanzos con Tajín
+
+Salteado rápido post-entreno con garbanzos tostados, pollo dorado y el remate ácido-picante del Tajín. Listo en 25 minutos y con proteína de sobra.
 
 ## Ingredientes (1 persona)
 
