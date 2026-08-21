@@ -4,6 +4,11 @@ interface Props {
 }
 
 const { title = 'Fork & Commit' } = Astro.props;
+
+// BASE_URL llega sin barra final ('/fork-and-commit'), así que hay que
+// normalizarla antes de concatenar o salen rutas como
+// '/fork-and-commitfavicon.svg'.
+const base = import.meta.env.BASE_URL.replace(/\/?$/, '/');
 ---
 
 <!doctype html>
@@ -11,13 +16,18 @@ const { title = 'Fork & Commit' } = Astro.props;
 	<head>
 		<meta charset="UTF-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-		<link rel="icon" type="image/svg+xml" href={`${import.meta.env.BASE_URL}favicon.svg`} />
-		<link rel="icon" href={`${import.meta.env.BASE_URL}favicon.ico`} />
-		<link rel="apple-touch-icon" href={`${import.meta.env.BASE_URL}apple-touch-icon.png`} />
-		<link rel="manifest" href={`${import.meta.env.BASE_URL}manifest.json`} />
+		<link rel="icon" type="image/svg+xml" href={`${base}favicon.svg`} />
+		<link rel="icon" href={`${base}favicon.ico`} />
+		<link rel="apple-touch-icon" href={`${base}apple-touch-icon.png`} />
+		<link rel="manifest" href={`${base}manifest.webmanifest`} />
 		<meta name="generator" content={Astro.generator} />
 		<meta name="description" content="Fork & Commit — Colección personal de recetas donde el código se encuentra con la cocina." />
 		<meta name="theme-color" content="#F9F3E3" />
+
+		<!-- Acceso directo en la pantalla de inicio de iOS -->
+		<meta name="apple-mobile-web-app-capable" content="yes" />
+		<meta name="apple-mobile-web-app-title" content="Fork &amp; Commit" />
+		<meta name="apple-mobile-web-app-status-bar-style" content="default" />
 
 		<!-- Google Fonts -->
 		<link rel="preconnect" href="https://fonts.googleapis.com">
