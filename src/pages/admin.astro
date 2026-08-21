@@ -1,0 +1,1198 @@
+---
+import Layout from '../layouts/Layout.astro';
+
+// Se inyecta en el cliente en tiempo de build. No es un secreto: es una
+// dirección. La clave la escribe el usuario y vive en su navegador.
+const apiUrl = import.meta.env.PUBLIC_API_URL ?? 'http://localhost:8000';
+
+const DIFICULTADES = ['Fácil', 'Media', 'Difícil'];
+const CATEGORIAS = [
+	'Plato principal', 'Entrante', 'Postre', 'Desayuno',
+	'Snack', 'Bebida', 'Acompañamiento', 'Salsa/Condimento',
+];
+---
+
+<Layout title="Admin — Fork & Commit" noindex>
+	<div class="pagina" data-api={apiUrl}>
+		<div class="mancha" aria-hidden="true"></div>
+
+		<header class="barra">
+			<a href={import.meta.env.BASE_URL.replace(/\/?$/, '/')} class="volver">
+				<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+					<path d="M16 10H5"/><path d="M9.5 5.5L5 10l4.5 4.5"/>
+				</svg>
+				recetario
+			</a>
+			<span class="logo">
+				<svg class="estrella" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 0c.7 6.5 4.8 10.6 12 12-7.2 1.4-11.3 5.5-12 12-.7-6.5-4.8-10.6-12-12 7.2-1.4 11.3-5.5 12-12z" fill="currentColor"/></svg>
+				Admin
+			</span>
+			<button type="button" id="salir" class="salir" hidden>salir</button>
+		</header>
+
+		<!-- ── Puerta ──────────────────────────────────────────── -->
+		<section id="puerta" class="puerta">
+			<form id="form-clave" class="tarjeta-clave">
+				<h1>Sección de administración</h1>
+				<p class="ayuda">Escribe la clave del backend. Se guarda en este navegador.</p>
+				<div class="campo-clave">
+					<input type="password" id="clave" autocomplete="current-password" placeholder="clave" required />
+					<button type="submit" class="btn btn-primario">Entrar</button>
+				</div>
+				<p id="error-clave" class="error" hidden></p>
+				<p class="pie-api">API: <code>{apiUrl}</code></p>
+			</form>
+		</section>
+
+		<!-- ── Aplicación ──────────────────────────────────────── -->
+		<main id="app" class="app" hidden>
+			<!-- Navegador: buscador, filtros y lista, con scroll propio -->
+			<aside class="panel panel-lista">
+				<div class="lista-cabecera">
+					<button type="button" id="btn-nueva" class="btn btn-primario btn-ancho">
+						<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true">
+							<path d="M10 4.5v11M4.5 10h11"/>
+						</svg>
+						Nueva receta
+					</button>
+
+					<div class="buscador">
+						<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" aria-hidden="true">
+							<circle cx="9" cy="9" r="6"/><path d="M13.5 13.5L17 17"/>
+						</svg>
+						<input type="search" id="buscar" placeholder="filtrar por título" autocomplete="off" aria-label="Filtrar por título" />
+					</div>
+
+					<div class="tabs">
+						<button type="button" class="tab activa" data-filtro="" role="tab">todas</button>
+						<button type="button" class="tab" data-filtro="draft" role="tab">borradores</button>
+						<button type="button" class="tab" data-filtro="published" role="tab">publicadas</button>
+					</div>
+
+					<span id="recuento" class="recuento"></span>
+				</div>
+
+				<div class="lista-scroll">
+					<ul id="lista" class="lista"></ul>
+					<template id="tpl-fila">
+						<li>
+							<button type="button" class="fila">
+								<span class="fila-titulo"></span>
+								<span class="fila-pie">
+									<span class="fila-meta"></span>
+									<span class="insignia"></span>
+								</span>
+							</button>
+						</li>
+					</template>
+					<p id="lista-vacia" class="estado" hidden>Nada que mostrar.</p>
+				</div>
+			</aside>
+
+			<!-- Espacio de trabajo: generar, o el detalle de lo seleccionado -->
+			<div class="trabajo">
+				<section id="panel-generar" class="panel panel-generar">
+					<div class="panel-cabecera">
+						<h2>Nueva receta</h2>
+						<div class="tabs" role="tablist">
+							<button type="button" class="tab activa" data-modo="text" role="tab">texto</button>
+							<button type="button" class="tab" data-modo="url" role="tab">enlace</button>
+							<button type="button" class="tab" data-modo="image" role="tab">foto</button>
+						</div>
+					</div>
+
+					<form id="form-generar">
+						<textarea id="in-text" rows="9" placeholder="Pega aquí la receta: un mensaje, unas notas, lo que sea."></textarea>
+						<input type="url" id="in-url" placeholder="https://ejemplo.com/curry-japones" hidden />
+						<input type="file" id="in-image" accept="image/jpeg,image/png,image/gif,image/webp" hidden />
+						<input type="text" id="in-notes" placeholder="Indicaciones extra (opcional): «para 2 personas», «sin gluten»…" />
+						<button type="submit" id="btn-generar" class="btn btn-primario btn-ancho">Generar borrador</button>
+					</form>
+					<p id="estado-generar" class="estado" hidden></p>
+				</section>
+
+				<!-- Detalle -->
+				<section id="detalle" class="panel panel-detalle" hidden>
+					<div class="panel-cabecera">
+						<h2 id="detalle-titulo">Receta</h2>
+						<span id="detalle-estado" class="insignia"></span>
+					</div>
+
+					<p id="avisos" class="avisos" hidden></p>
+
+					<form id="form-editar" class="rejilla">
+						<label class="ancho-total">Título<input type="text" name="title" required /></label>
+						<label class="ancho-total">Etiquetas <small>separadas por comas, máximo 6</small><input type="text" name="tags" /></label>
+						<label>Dificultad<select name="difficulty">{DIFICULTADES.map(d => <option value={d}>{d}</option>)}</select></label>
+						<label>Categoría<select name="category">{CATEGORIAS.map(c => <option value={c}>{c}</option>)}</select></label>
+						<label>Tiempo total<input type="text" name="total_time" required /></label>
+						<label>Tiempo activo<input type="text" name="active_time" required /></label>
+						<label>Raciones<input type="number" name="servings" min="1" max="50" required /></label>
+						<label>Fecha<input type="date" name="date" required /></label>
+						<label class="ancho-total">Lista de la compra <small>separada por comas</small><input type="text" name="shopping_list" /></label>
+						<label class="ancho-total">Cuerpo <small>markdown, sin el frontmatter</small><textarea name="body" rows="16" required></textarea></label>
+					</form>
+
+					<div class="acciones">
+						<button type="button" id="btn-guardar" class="btn">Guardar</button>
+						<button type="button" id="btn-previsualizar" class="btn">Ver el .md</button>
+						<button type="button" id="btn-publicar" class="btn btn-primario">Publicar</button>
+						<button type="button" id="btn-borrar" class="btn btn-peligro">Borrar</button>
+					</div>
+					<p id="estado-detalle" class="estado" hidden></p>
+
+					<details id="previsualizacion" hidden>
+						<summary>Fichero que se commiteará</summary>
+						<pre id="md"></pre>
+					</details>
+				</section>
+			</div>
+		</main>
+
+	</div>
+
+	<!-- Confirmación. <dialog> nativo: trae bloqueo de foco, Esc y capa
+	     superior sin z-index. Va en el markup para que los estilos con
+	     ámbito de Astro le apliquen, y FUERA de .pagina: su overflow-x:
+	     clip convierte al contenedor en bloque contenedor de los
+	     descendientes fixed, y el diálogo se iría a la esquina. -->
+	<dialog id="dialogo" class="dialogo" aria-labelledby="dialogo-titulo">
+		<form method="dialog" class="dialogo-caja">
+			<h3 id="dialogo-titulo"></h3>
+			<p id="dialogo-texto"></p>
+			<div class="dialogo-acciones">
+				<button type="submit" value="no" class="btn">Cancelar</button>
+				<button type="submit" value="si" id="dialogo-ok" class="btn btn-primario">Aceptar</button>
+			</div>
+		</form>
+	</dialog>
+</Layout>
+
+<style>
+	/* Varias de estas reglas fijan display, que machaca el display:none que
+	   el navegador da a [hidden]. Sin esto, ocultar no oculta. */
+	[hidden] { display: none !important; }
+
+	.pagina { position: relative; overflow-x: clip; min-height: 100vh; }
+
+	.mancha {
+		position: absolute;
+		top: 18rem;
+		right: -8rem;
+		width: 22rem;
+		height: 20rem;
+		background: var(--cielo);
+		border-radius: 58% 42% 50% 50% / 52% 46% 54% 48%;
+		opacity: 0.45;
+		z-index: 0;
+		pointer-events: none;
+	}
+
+	/* ── Barra ─────────────────────────────────────────────── */
+	.barra {
+		position: relative;
+		z-index: 1;
+		display: flex;
+		align-items: center;
+		gap: 1rem;
+		flex-wrap: wrap;
+		padding: 1.625rem 2.5rem;
+	}
+
+	.volver,
+	.salir {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.625rem;
+		background: var(--blanco);
+		border: var(--borde);
+		border-radius: var(--r-pildora);
+		box-shadow: 4px 4px 0 var(--menta-hondo);
+		padding: 0.75rem 1.375rem;
+		font-family: var(--cuerpo);
+		font-weight: 700;
+		font-size: 0.9375rem;
+		color: var(--tinta);
+		cursor: pointer;
+		transition: transform 0.15s ease, box-shadow 0.15s ease;
+	}
+
+	.volver:hover,
+	.salir:hover {
+		transform: translate(-2px, -2px);
+		box-shadow: 7px 7px 0 var(--menta-hondo);
+		color: var(--tinta);
+	}
+
+	.salir {
+		margin-left: auto;
+		box-shadow: 4px 4px 0 var(--rosa-hondo);
+	}
+
+	.salir:hover { box-shadow: 7px 7px 0 var(--rosa-hondo); }
+
+	.volver svg { width: 18px; height: 18px; }
+
+	.logo {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.75rem;
+		background: var(--mantequilla);
+		border: var(--borde);
+		border-radius: var(--r-pildora);
+		box-shadow: 4px 4px 0 var(--mantequilla-hondo);
+		padding: 0.6875rem 1.375rem;
+		font-family: var(--display);
+		font-weight: 800;
+		font-size: 1.3125rem;
+		letter-spacing: -0.02em;
+		transform: rotate(-1.4deg);
+	}
+
+	.estrella { width: 16px; height: 16px; flex-shrink: 0; }
+
+	/* ── Puerta ────────────────────────────────────────────── */
+	.puerta {
+		position: relative;
+		z-index: 1;
+		display: flex;
+		justify-content: center;
+		padding: 4rem 1.5rem;
+	}
+
+	.tarjeta-clave {
+		width: 100%;
+		max-width: 30rem;
+		background: var(--lavanda);
+		border: var(--borde);
+		border-radius: var(--r-panel);
+		box-shadow: 9px 9px 0 var(--lavanda-hondo);
+		padding: 2.25rem 2rem;
+	}
+
+	.tarjeta-clave h1 {
+		font-size: 1.75rem;
+		color: var(--tinta);
+		margin-bottom: 0.625rem;
+	}
+
+	.ayuda {
+		font-weight: 600;
+		font-size: 0.9375rem;
+		line-height: 1.55;
+		color: var(--lavanda-ink);
+		margin-bottom: 1.5rem;
+	}
+
+	.campo-clave { display: flex; flex-direction: column; gap: 0.75rem; }
+
+	.pie-api {
+		margin-top: 1.25rem;
+		font-family: var(--pixel);
+		font-size: 0.625rem;
+		line-height: 1.7;
+		color: var(--lavanda-ink);
+		word-break: break-all;
+	}
+
+	.pie-api code { font-family: var(--pixel); }
+
+	/* ── Aplicación ────────────────────────────────────────── */
+	.app {
+		position: relative;
+		z-index: 1;
+		display: grid;
+		grid-template-columns: 1fr;
+		gap: 2rem;
+		max-width: 82rem;
+		margin: 0 auto;
+		padding: 1rem 2.5rem 4rem;
+	}
+
+	.trabajo {
+		display: flex;
+		flex-direction: column;
+		gap: 2rem;
+		min-width: 0;
+	}
+
+	.panel {
+		background: var(--blanco);
+		border: var(--borde);
+		border-radius: var(--r-panel);
+		padding: 1.75rem;
+	}
+
+	.panel-generar { box-shadow: 7px 7px 0 var(--menta-hondo); }
+	.panel-lista   { box-shadow: 7px 7px 0 var(--cielo-hondo); }
+	.panel-detalle { box-shadow: 7px 7px 0 var(--rosa-hondo); }
+
+	/* ── Navegador ─────────────────────────────────────────── */
+	.lista-cabecera {
+		display: flex;
+		flex-direction: column;
+		gap: 0.75rem;
+		padding-bottom: 1rem;
+		border-bottom: 2.5px dotted var(--cielo-hondo);
+	}
+
+	.buscador {
+		display: flex;
+		align-items: center;
+		gap: 0.625rem;
+		background: var(--crema);
+		border: var(--borde-fino);
+		border-radius: var(--r-pildora);
+		padding: 0.5rem 0.875rem;
+	}
+
+	.buscador svg {
+		width: 16px;
+		height: 16px;
+		flex-shrink: 0;
+		color: var(--tinta-suave);
+	}
+
+	.buscador input {
+		border: none;
+		background: transparent;
+		border-radius: 0;
+		padding: 0;
+		font-size: 0.875rem;
+	}
+
+	.buscador input:focus-visible { outline: none; }
+
+	.recuento {
+		font-family: var(--pixel);
+		font-size: 0.5938rem;
+		letter-spacing: 0.04em;
+		color: var(--tinta-suave);
+	}
+
+	.lista-scroll {
+		padding-top: 1rem;
+	}
+
+	.btn-nueva-svg { width: 16px; height: 16px; }
+
+	#btn-nueva {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		gap: 0.5rem;
+	}
+
+	#btn-nueva svg { width: 16px; height: 16px; flex-shrink: 0; }
+
+	.panel-cabecera {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 1rem;
+		flex-wrap: wrap;
+		margin-bottom: 1.25rem;
+	}
+
+	.panel-cabecera h2 { font-size: 1.5rem; color: var(--tinta); }
+
+	/* ── Pestañas ──────────────────────────────────────────── */
+	.tabs { display: flex; flex-wrap: wrap; gap: 0.4375rem; }
+
+	.tab {
+		background: var(--crema);
+		border: var(--borde-fino);
+		border-radius: var(--r-pildora);
+		padding: 0.5rem 1rem;
+		font-family: var(--cuerpo);
+		font-weight: 700;
+		font-size: 0.8125rem;
+		color: var(--tinta);
+		cursor: pointer;
+		transition: transform 0.15s ease;
+	}
+
+	.tab:hover:not(.activa) { transform: translate(-1px, -1px); }
+	.tab.activa { background: var(--tinta); color: var(--crema); }
+
+	/* ── Formularios ───────────────────────────────────────── */
+	input,
+	textarea,
+	select {
+		width: 100%;
+		background: var(--crema);
+		border: var(--borde-fino);
+		border-radius: var(--r-caja);
+		padding: 0.75rem 1rem;
+		font-family: var(--cuerpo);
+		font-weight: 600;
+		font-size: 0.9375rem;
+		color: var(--tinta);
+	}
+
+	input::placeholder,
+	textarea::placeholder { color: var(--tinta-suave); }
+
+	textarea {
+		resize: vertical;
+		line-height: 1.6;
+	}
+
+	textarea[name="body"] {
+		font-family: ui-monospace, 'SF Mono', Menlo, monospace;
+		font-size: 0.8125rem;
+		font-weight: 400;
+	}
+
+	select { cursor: pointer; }
+
+	#form-generar { display: flex; flex-direction: column; gap: 0.875rem; }
+
+	.rejilla {
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+		gap: 1rem;
+	}
+
+	.rejilla label {
+		display: flex;
+		flex-direction: column;
+		gap: 0.4375rem;
+		font-family: var(--pixel);
+		font-size: 0.625rem;
+		letter-spacing: 0.04em;
+		color: var(--tinta-suave);
+	}
+
+	.rejilla label small {
+		font-family: var(--cuerpo);
+		font-size: 0.6875rem;
+		font-weight: 600;
+		letter-spacing: 0;
+		text-transform: none;
+	}
+
+	.ancho-total { grid-column: 1 / -1; }
+
+	/* ── Botones ───────────────────────────────────────────── */
+	.btn {
+		background: var(--crema);
+		border: var(--borde);
+		border-radius: var(--r-pildora);
+		box-shadow: 4px 4px 0 var(--lavanda-hondo);
+		padding: 0.8125rem 1.5rem;
+		font-family: var(--cuerpo);
+		font-weight: 700;
+		font-size: 0.9375rem;
+		color: var(--tinta);
+		cursor: pointer;
+		transition: transform 0.15s ease, box-shadow 0.15s ease;
+	}
+
+	.btn:hover:not(:disabled) {
+		transform: translate(-2px, -2px);
+		box-shadow: 7px 7px 0 var(--lavanda-hondo);
+	}
+
+	.btn:disabled { opacity: 0.5; cursor: progress; }
+
+	.btn-primario {
+		background: var(--tinta);
+		color: var(--crema);
+		box-shadow: 4px 4px 0 var(--menta-hondo);
+	}
+
+	.btn-primario:hover:not(:disabled) { box-shadow: 7px 7px 0 var(--menta-hondo); }
+
+	.btn-peligro { box-shadow: 4px 4px 0 var(--rosa-hondo); }
+	.btn-peligro:hover:not(:disabled) { box-shadow: 7px 7px 0 var(--rosa-hondo); }
+
+	.btn-ancho { width: 100%; }
+
+	.acciones {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.625rem;
+		margin-top: 1.5rem;
+	}
+
+	/* ── Listado ───────────────────────────────────────────── */
+	.lista { display: flex; flex-direction: column; gap: 0.625rem; list-style: none; }
+
+	.fila {
+		display: flex;
+		flex-direction: column;
+		align-items: stretch;
+		gap: 0.4375rem;
+		width: 100%;
+		background: var(--crema);
+		border: var(--borde-fino);
+		border-radius: var(--r-caja);
+		padding: 0.6875rem 0.875rem;
+		font-family: var(--cuerpo);
+		text-align: left;
+		color: var(--tinta);
+		cursor: pointer;
+		transition: transform 0.15s ease, box-shadow 0.15s ease;
+	}
+
+	.fila:hover { transform: translate(-2px, -2px); box-shadow: 5px 5px 0 var(--cielo-hondo); }
+
+	.fila.seleccionada {
+		background: var(--cielo);
+		box-shadow: 5px 5px 0 var(--cielo-hondo);
+	}
+
+	.fila-pie {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 0.5rem;
+	}
+
+	.fila-titulo {
+		display: block;
+		font-family: var(--display);
+		font-weight: 800;
+		font-size: 0.9688rem;
+		letter-spacing: -0.02em;
+		line-height: 1.25;
+	}
+
+	.fila-meta {
+		font-family: var(--pixel);
+		font-size: 0.5938rem;
+		letter-spacing: 0.04em;
+		line-height: 1.5;
+		color: var(--tinta-suave);
+		min-width: 0;
+	}
+
+	.insignia {
+		flex-shrink: 0;
+		border: 2px solid var(--tinta);
+		border-radius: var(--r-pildora);
+		padding: 0.25rem 0.625rem;
+		font-family: var(--pixel);
+		font-size: 0.5625rem;
+		letter-spacing: 0.04em;
+		white-space: nowrap;
+	}
+
+	.insignia-draft     { background: var(--mantequilla); color: var(--mantequilla-ink); }
+	.insignia-published { background: var(--menta); color: var(--menta-ink); }
+
+	/* ── Estados ───────────────────────────────────────────── */
+	.estado,
+	.error,
+	.avisos {
+		border: var(--borde-fino);
+		border-radius: var(--r-caja);
+		padding: 0.875rem 1.125rem;
+		font-weight: 600;
+		font-size: 0.875rem;
+		line-height: 1.55;
+	}
+
+	.estado { margin-top: 1.125rem; background: var(--cielo); color: var(--cielo-ink); }
+	.estado.malo { background: var(--rosa); color: var(--rosa-ink); }
+	.estado.bien { background: var(--menta); color: var(--menta-ink); }
+
+	.error { margin-top: 1rem; background: var(--rosa); color: var(--rosa-ink); }
+
+	.avisos {
+		background: var(--mantequilla);
+		color: var(--mantequilla-ink);
+		margin-bottom: 1.25rem;
+		white-space: pre-line;
+	}
+
+	/* ── Previsualización ──────────────────────────────────── */
+	#previsualizacion { margin-top: 1.5rem; }
+
+	#previsualizacion summary {
+		font-family: var(--cuerpo);
+		font-weight: 700;
+		font-size: 0.875rem;
+		cursor: pointer;
+		padding: 0.5rem 0;
+	}
+
+	#md {
+		background: var(--crema);
+		border: var(--borde-fino);
+		border-radius: var(--r-caja);
+		padding: 1.125rem;
+		margin-top: 0.75rem;
+		overflow-x: auto;
+		font-family: ui-monospace, 'SF Mono', Menlo, monospace;
+		font-size: 0.75rem;
+		line-height: 1.65;
+		white-space: pre-wrap;
+		word-break: break-word;
+	}
+
+	/* ── Diálogo ───────────────────────────────────────────── */
+	.dialogo {
+		position: fixed;
+		inset: 0;
+		margin: auto;
+		width: min(26rem, calc(100% - 2.5rem));
+		height: fit-content;
+		max-height: calc(100% - 2.5rem);
+		background: transparent;
+		border: none;
+		padding: 0;
+		color: var(--tinta);
+	}
+
+	.dialogo::backdrop {
+		background: rgba(56, 37, 65, 0.5);
+	}
+
+	.dialogo-caja {
+		background: var(--blanco);
+		border: var(--borde);
+		border-radius: var(--r-panel);
+		box-shadow: 9px 9px 0 var(--lavanda-hondo);
+		padding: 1.75rem;
+	}
+
+	.dialogo[open] .dialogo-caja {
+		animation: aparecer 0.18s ease;
+	}
+
+	@keyframes aparecer {
+		from { opacity: 0; transform: scale(0.94) translateY(6px); }
+		to   { opacity: 1; transform: scale(1) translateY(0); }
+	}
+
+	.dialogo-caja h3 {
+		font-size: 1.375rem;
+		margin-bottom: 0.625rem;
+	}
+
+	.dialogo-caja p {
+		font-weight: 600;
+		font-size: 0.9375rem;
+		line-height: 1.6;
+		color: var(--tinta-suave);
+		white-space: pre-line;
+	}
+
+	.dialogo-acciones {
+		display: flex;
+		flex-wrap: wrap;
+		justify-content: flex-end;
+		gap: 0.625rem;
+		margin-top: 1.5rem;
+	}
+
+	/* ── Escritorio ────────────────────────────────────────── */
+	@media (min-width: 64rem) {
+		.app {
+			grid-template-columns: 23rem minmax(0, 1fr);
+			align-items: start;
+		}
+
+		/* La lista crece sin tope según se acumulan recetas. Se queda fija y
+		   con scroll propio para que no empuje la página entera. */
+		.panel-lista {
+			position: sticky;
+			top: 1.5rem;
+			display: flex;
+			flex-direction: column;
+			max-height: calc(100vh - 3rem);
+			overflow: hidden;
+		}
+
+		.lista-scroll {
+			flex: 1;
+			min-height: 0;
+			overflow-y: auto;
+			/* sitio para la sombra dura de las filas al pasar por encima */
+			margin-right: -0.375rem;
+			padding-right: 0.375rem;
+		}
+	}
+
+	@media (max-width: 40rem) {
+		.barra { padding: 1rem 1.125rem; }
+		.app { padding: 0.5rem 1.125rem 3rem; }
+		.panel { padding: 1.25rem; border-radius: var(--r-tarjeta); }
+		.puerta { padding: 2rem 1.125rem; }
+		.mancha { display: none; }
+	}
+</style>
+
+<script>
+	// ── Contexto ─────────────────────────────────────────────────────────────
+	const pagina = document.querySelector('.pagina') as HTMLElement;
+	const API = (pagina.dataset.api ?? '').replace(/\/$/, '');
+	const LLAVE = 'fc-admin-token';
+
+	const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
+
+	const puerta        = $('puerta');
+	const app           = $('app');
+	const btnSalir      = $<HTMLButtonElement>('salir');
+	const formClave     = $<HTMLFormElement>('form-clave');
+	const inputClave    = $<HTMLInputElement>('clave');
+	const errorClave    = $('error-clave');
+	const lista         = $<HTMLUListElement>('lista');
+	const panelGenerar  = $('panel-generar');
+	const inputBuscar   = $<HTMLInputElement>('buscar');
+	const recuento      = $('recuento');
+	const listaVacia    = $('lista-vacia');
+	const detalle       = $('detalle');
+	const formEditar    = $<HTMLFormElement>('form-editar');
+	const formGenerar   = $<HTMLFormElement>('form-generar');
+	const btnGenerar    = $<HTMLButtonElement>('btn-generar');
+	const estadoGenerar = $('estado-generar');
+	const estadoDetalle = $('estado-detalle');
+	const avisos        = $('avisos');
+	const preview       = $<HTMLDetailsElement>('previsualizacion');
+
+	let token = localStorage.getItem(LLAVE) ?? '';
+	let modo: 'text' | 'url' | 'image' = 'text';
+	let filtro = '';
+	let busqueda = '';
+	let recetas: any[] = [];
+	let actual: any = null;
+
+	// ── Cliente HTTP ─────────────────────────────────────────────────────────
+	class ApiError extends Error {
+		constructor(public status: number, message: string) {
+			super(message);
+		}
+	}
+
+	async function api(path: string, init: RequestInit = {}) {
+		let res: Response;
+		try {
+			res = await fetch(API + path, {
+				...init,
+				headers: { Authorization: `Bearer ${token}`, ...(init.headers ?? {}) },
+			});
+		} catch {
+			// fetch solo lanza por red o por bloqueo del navegador, y no
+			// distingue entre ambos. Los dos casos importan aquí.
+			throw new ApiError(
+				0,
+				`No se pudo contactar con ${API}. Comprueba que el backend está levantado. ` +
+					(location.protocol === 'https:' && API.startsWith('http://') && !/\/\/(localhost|127\.0\.0\.1)/.test(API)
+						? 'Además, esta página va por HTTPS y la API por HTTP: el navegador bloquea esa mezcla. La API necesita HTTPS.'
+						: ''),
+			);
+		}
+
+		if (res.status === 204) return null;
+
+		const cuerpo = await res.json().catch(() => ({}));
+		if (!res.ok) throw new ApiError(res.status, cuerpo.detail ?? `Error ${res.status}`);
+		return cuerpo;
+	}
+
+	/** Reemplazo de confirm(). Resuelve a false con Esc o clic en el fondo. */
+	function confirmar(opciones: {
+		titulo: string;
+		texto: string;
+		aceptar?: string;
+		peligro?: boolean;
+	}): Promise<boolean> {
+		const dialogo = $<HTMLDialogElement>('dialogo');
+		$('dialogo-titulo').textContent = opciones.titulo;
+		$('dialogo-texto').textContent = opciones.texto;
+
+		const ok = $<HTMLButtonElement>('dialogo-ok');
+		ok.textContent = opciones.aceptar ?? 'Aceptar';
+		ok.classList.toggle('btn-peligro', Boolean(opciones.peligro));
+		ok.classList.toggle('btn-primario', !opciones.peligro);
+
+		// returnValue sobrevive entre aperturas; sin esto, un Esc heredaría
+		// el "si" de la vez anterior.
+		dialogo.returnValue = '';
+		dialogo.showModal();
+
+		return new Promise((resolver) => {
+			dialogo.addEventListener('close', () => resolver(dialogo.returnValue === 'si'), {
+				once: true,
+			});
+		});
+	}
+
+	// Clic en el fondo: el <dialog> nativo no cierra solo. El formulario cubre
+	// todo el interior, así que un impacto en el propio dialog es el backdrop.
+	$<HTMLDialogElement>('dialogo').addEventListener('click', (e) => {
+		if (e.target === e.currentTarget) (e.currentTarget as HTMLDialogElement).close('no');
+	});
+
+	function avisar(el: HTMLElement, texto: string, tono: 'bien' | 'malo' | '' = '') {
+		el.textContent = texto;
+		el.className = `estado${tono ? ' ' + tono : ''}`;
+		el.hidden = !texto;
+	}
+
+	/** Un 401 significa que la clave dejó de valer: de vuelta a la puerta. */
+	function manejar(err: unknown, destino: HTMLElement) {
+		if (err instanceof ApiError && err.status === 401) {
+			cerrarSesion('La clave ya no es válida. Vuelve a entrar.');
+			return;
+		}
+		avisar(destino, err instanceof Error ? err.message : String(err), 'malo');
+	}
+
+	// ── Sesión ───────────────────────────────────────────────────────────────
+	function cerrarSesion(motivo = '') {
+		token = '';
+		localStorage.removeItem(LLAVE);
+		app.hidden = true;
+		btnSalir.hidden = true;
+		puerta.hidden = false;
+		detalle.hidden = true;
+		errorClave.textContent = motivo;
+		errorClave.hidden = !motivo;
+		inputClave.value = '';
+	}
+
+	async function entrar() {
+		puerta.hidden = true;
+		app.hidden = false;
+		btnSalir.hidden = false;
+		await cargarLista();
+	}
+
+	formClave.addEventListener('submit', async (e) => {
+		e.preventDefault();
+		token = inputClave.value.trim();
+		errorClave.hidden = true;
+		try {
+			await api('/auth/check');
+			localStorage.setItem(LLAVE, token);
+			await entrar();
+		} catch (err) {
+			token = '';
+			errorClave.textContent = err instanceof Error ? err.message : String(err);
+			errorClave.hidden = false;
+		}
+	});
+
+	btnSalir.addEventListener('click', () => cerrarSesion());
+
+	/** El espacio de trabajo enseña una cosa u otra, nunca las dos. */
+	function mostrarGenerar() {
+		actual = null;
+		detalle.hidden = true;
+		panelGenerar.hidden = false;
+		pintarLista();
+	}
+
+	$<HTMLButtonElement>('btn-nueva').addEventListener('click', () => {
+		mostrarGenerar();
+		avisar(estadoGenerar, '');
+		inputBuscar.value = '';
+		busqueda = '';
+		pintarLista();
+	});
+
+	// ── Listado ──────────────────────────────────────────────────────────────
+	/** Sin acentos ni mayúsculas: buscar "Udon" tiene que encontrar "Udón". */
+	const plano = (t: string) =>
+		t.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+
+	async function cargarLista() {
+		try {
+			recetas = await api('/recipes' + (filtro ? `?status=${filtro}` : ''));
+			pintarLista();
+		} catch (err) {
+			manejar(err, estadoGenerar);
+		}
+	}
+
+	function pintarLista() {
+		lista.innerHTML = '';
+
+		const visibles = busqueda
+			? recetas.filter((r) => plano(r.title).includes(plano(busqueda)))
+			: recetas;
+
+		listaVacia.hidden = visibles.length > 0;
+		recuento.textContent =
+			visibles.length === recetas.length
+				? `${recetas.length} recetas`
+				: `${visibles.length} de ${recetas.length}`;
+
+		const plantilla = $<HTMLTemplateElement>('tpl-fila');
+
+		for (const r of visibles) {
+			const li = plantilla.content.cloneNode(true) as DocumentFragment;
+			const btn = li.querySelector('.fila') as HTMLButtonElement;
+			btn.classList.toggle('seleccionada', actual?.id === r.id);
+			(li.querySelector('.fila-titulo') as HTMLElement).textContent = r.title;
+			(li.querySelector('.fila-meta') as HTMLElement).textContent =
+				`${r.date} · ${r.total_time} · ${r.difficulty}`;
+
+			const insignia = li.querySelector('.insignia') as HTMLElement;
+			insignia.classList.add(`insignia-${r.status}`);
+			insignia.textContent = r.status === 'draft' ? 'borrador' : 'publicada';
+
+			btn.addEventListener('click', () => abrir(r.id));
+			lista.append(li);
+		}
+	}
+
+	inputBuscar.addEventListener('input', () => {
+		busqueda = inputBuscar.value.trim();
+		pintarLista();
+	});
+
+	document.querySelectorAll<HTMLButtonElement>('[data-filtro]').forEach((tab) => {
+		tab.addEventListener('click', () => {
+			document.querySelectorAll('[data-filtro]').forEach((t) => t.classList.remove('activa'));
+			tab.classList.add('activa');
+			filtro = tab.dataset.filtro ?? '';
+			cargarLista();
+		});
+	});
+
+	// ── Detalle ──────────────────────────────────────────────────────────────
+	async function abrir(id: number) {
+		try {
+			actual = await api(`/recipes/${id}`);
+			panelGenerar.hidden = true;
+			pintarDetalle();
+			pintarLista();
+			// En escritorio el detalle ya está a la vista; desplazar solo
+			// molestaría. En móvil, donde va debajo, sí hace falta.
+			if (!window.matchMedia('(min-width: 64rem)').matches) {
+				detalle.scrollIntoView({ behavior: 'smooth', block: 'start' });
+			}
+		} catch (err) {
+			manejar(err, estadoDetalle);
+		}
+	}
+
+	function pintarDetalle() {
+		if (!actual) return;
+		detalle.hidden = false;
+		preview.hidden = true;
+		preview.open = false;
+		avisar(estadoDetalle, '');
+
+		$('detalle-titulo').textContent = actual.title;
+		const insignia = $('detalle-estado');
+		insignia.className = `insignia insignia-${actual.status}`;
+		insignia.textContent = actual.status === 'draft' ? 'borrador' : 'publicada';
+
+		const warn = actual.review_warnings ?? [];
+		avisos.textContent = warn.length ? 'Revisa antes de publicar:\n· ' + warn.join('\n· ') : '';
+		avisos.hidden = warn.length === 0;
+
+		const f = formEditar;
+		(f.elements.namedItem('title') as HTMLInputElement).value = actual.title;
+		(f.elements.namedItem('tags') as HTMLInputElement).value = (actual.tags ?? []).join(', ');
+		(f.elements.namedItem('difficulty') as HTMLSelectElement).value = actual.difficulty;
+		(f.elements.namedItem('category') as HTMLSelectElement).value = actual.category;
+		(f.elements.namedItem('total_time') as HTMLInputElement).value = actual.total_time;
+		(f.elements.namedItem('active_time') as HTMLInputElement).value = actual.active_time;
+		(f.elements.namedItem('servings') as HTMLInputElement).value = actual.servings;
+		(f.elements.namedItem('date') as HTMLInputElement).value = actual.date;
+		(f.elements.namedItem('shopping_list') as HTMLInputElement).value = (actual.shopping_list ?? []).join(', ');
+		(f.elements.namedItem('body') as HTMLTextAreaElement).value = actual.body;
+	}
+
+	const listaDe = (v: string) => v.split(',').map((s) => s.trim()).filter(Boolean);
+
+	function cambios() {
+		const d = new FormData(formEditar);
+		return {
+			title: String(d.get('title')),
+			tags: listaDe(String(d.get('tags'))),
+			difficulty: String(d.get('difficulty')),
+			category: String(d.get('category')),
+			total_time: String(d.get('total_time')),
+			active_time: String(d.get('active_time')),
+			servings: Number(d.get('servings')),
+			date: String(d.get('date')),
+			shopping_list: listaDe(String(d.get('shopping_list'))),
+			body: String(d.get('body')),
+		};
+	}
+
+	async function conBoton(btn: HTMLButtonElement, etiqueta: string, tarea: () => Promise<void>) {
+		const original = btn.textContent;
+		btn.disabled = true;
+		btn.textContent = etiqueta;
+		try {
+			await tarea();
+		} finally {
+			btn.disabled = false;
+			btn.textContent = original;
+		}
+	}
+
+	$<HTMLButtonElement>('btn-guardar').addEventListener('click', async (e) => {
+		const boton = e.currentTarget as HTMLButtonElement;
+		if (!formEditar.reportValidity()) return;
+		await conBoton(boton, 'Guardando…', async () => {
+			try {
+				actual = await api(`/recipes/${actual.id}`, {
+					method: 'PATCH',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify(cambios()),
+				});
+				pintarDetalle();
+				await cargarLista();
+				avisar(estadoDetalle, 'Guardado.', 'bien');
+			} catch (err) {
+				manejar(err, estadoDetalle);
+			}
+		});
+	});
+
+	$<HTMLButtonElement>('btn-previsualizar').addEventListener('click', async (e) => {
+		const boton = e.currentTarget as HTMLButtonElement;
+		await conBoton(boton, 'Cargando…', async () => {
+			try {
+				const { markdown, filename } = await api(`/recipes/${actual.id}/markdown`);
+				$('md').textContent = markdown;
+				preview.hidden = false;
+				preview.open = true;
+				(preview.querySelector('summary') as HTMLElement).textContent = filename;
+			} catch (err) {
+				manejar(err, estadoDetalle);
+			}
+		});
+	});
+
+	async function publicar(force: boolean) {
+		const res = await api(`/recipes/${actual.id}/publish${force ? '?force=true' : ''}`, {
+			method: 'POST',
+		});
+		avisar(estadoDetalle, `Publicada. Commit: ${res.github_commit_url}`, 'bien');
+		await abrir(actual.id);
+		await cargarLista();
+	}
+
+	$<HTMLButtonElement>('btn-publicar').addEventListener('click', async (e) => {
+		// currentTarget se vacía en cuanto este manejador cede con un await,
+		// así que se captura antes de abrir el diálogo.
+		const boton = e.currentTarget as HTMLButtonElement;
+
+		const sigue = await confirmar({
+			titulo: '¿Publicar la receta?',
+			texto: `«${actual.title}» se commitea directo a la rama main de fork-and-commit.`,
+			aceptar: 'Publicar',
+		});
+		if (!sigue) return;
+
+		await conBoton(boton, 'Publicando…', async () => {
+			try {
+				await publicar(false);
+				return;
+			} catch (err) {
+				// 409 = ya publicada sin cambios, o el fichero ya existe en el repo
+				if (!(err instanceof ApiError && err.status === 409)) {
+					manejar(err, estadoDetalle);
+					return;
+				}
+				const forzar = await confirmar({
+					titulo: 'Hace falta confirmar',
+					texto: err.message,
+					aceptar: 'Publicar igualmente',
+					peligro: true,
+				});
+				if (!forzar) return;
+				try {
+					await publicar(true);
+				} catch (err2) {
+					manejar(err2, estadoDetalle);
+				}
+			}
+		});
+	});
+
+	$<HTMLButtonElement>('btn-borrar').addEventListener('click', async (e) => {
+		const boton = e.currentTarget as HTMLButtonElement;
+
+		const sigue = await confirmar({
+			titulo: '¿Borrar la receta?',
+			texto: `«${actual.title}» desaparece de la base de datos. No toca el fichero del repo.`,
+			aceptar: 'Borrar',
+			peligro: true,
+		});
+		if (!sigue) return;
+		await conBoton(boton, 'Borrando…', async () => {
+			try {
+				await api(`/recipes/${actual.id}`, { method: 'DELETE' });
+				await cargarLista();
+				mostrarGenerar();
+			} catch (err) {
+				manejar(err, estadoDetalle);
+			}
+		});
+	});
+
+	// ── Generación ───────────────────────────────────────────────────────────
+	document.querySelectorAll<HTMLButtonElement>('[data-modo]').forEach((tab) => {
+		tab.addEventListener('click', () => {
+			document.querySelectorAll('[data-modo]').forEach((t) => t.classList.remove('activa'));
+			tab.classList.add('activa');
+			modo = (tab.dataset.modo ?? 'text') as typeof modo;
+			$('in-text').hidden = modo !== 'text';
+			$('in-url').hidden = modo !== 'url';
+			$('in-image').hidden = modo !== 'image';
+			avisar(estadoGenerar, '');
+		});
+	});
+
+	formGenerar.addEventListener('submit', async (e) => {
+		e.preventDefault();
+		const notes = ($<HTMLInputElement>('in-notes').value || '').trim() || null;
+
+		let peticion: { path: string; init: RequestInit };
+		if (modo === 'text') {
+			const content = $<HTMLTextAreaElement>('in-text').value.trim();
+			if (content.length < 10) return avisar(estadoGenerar, 'Pega algo más de texto.', 'malo');
+			peticion = {
+				path: '/generate/text',
+				init: { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ content, notes }) },
+			};
+		} else if (modo === 'url') {
+			const url = $<HTMLInputElement>('in-url').value.trim();
+			if (!/^https?:\/\//.test(url)) return avisar(estadoGenerar, 'Escribe una URL válida.', 'malo');
+			peticion = {
+				path: '/generate/url',
+				init: { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ url, notes }) },
+			};
+		} else {
+			const file = $<HTMLInputElement>('in-image').files?.[0];
+			if (!file) return avisar(estadoGenerar, 'Elige una foto.', 'malo');
+			const fd = new FormData();
+			fd.append('file', file);
+			if (notes) fd.append('notes', notes);
+			// Sin Content-Type: el navegador pone el boundary del multipart
+			peticion = { path: '/generate/image', init: { method: 'POST', body: fd } };
+		}
+
+		await conBoton(btnGenerar, 'Generando…', async () => {
+			avisar(estadoGenerar, 'Claude está redactando la receta. Puede tardar un minuto.');
+			try {
+				const receta = await api(peticion.path, peticion.init);
+				formGenerar.reset();
+				avisar(estadoGenerar, `Borrador creado: «${receta.title}».`, 'bien');
+				await cargarLista();
+				await abrir(receta.id);
+			} catch (err) {
+				manejar(err, estadoGenerar);
+			}
+		});
+	});
+
+	// ── Arranque ─────────────────────────────────────────────────────────────
+	if (token) {
+		api('/auth/check')
+			.then(entrar)
+			.catch(() => cerrarSesion());
+	}
+</script>

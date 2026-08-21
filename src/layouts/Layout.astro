@@ -1,9 +1,11 @@
 ---
 interface Props {
 	title?: string;
+	/** Excluye la página de los buscadores. Para la sección de administración. */
+	noindex?: boolean;
 }
 
-const { title = 'Fork & Commit' } = Astro.props;
+const { title = 'Fork & Commit', noindex = false } = Astro.props;
 
 // BASE_URL llega sin barra final ('/fork-and-commit'), así que hay que
 // normalizarla antes de concatenar o salen rutas como
@@ -23,6 +25,7 @@ const base = import.meta.env.BASE_URL.replace(/\/?$/, '/');
 		<meta name="generator" content={Astro.generator} />
 		<meta name="description" content="Fork & Commit — Colección personal de recetas donde el código se encuentra con la cocina." />
 		<meta name="theme-color" content="#F9F3E3" />
+		{noindex && <meta name="robots" content="noindex, nofollow" />}
 
 		<!-- Acceso directo en la pantalla de inicio de iOS -->
 		<meta name="apple-mobile-web-app-capable" content="yes" />
