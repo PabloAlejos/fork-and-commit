@@ -8,6 +8,7 @@ const recipes = await getCollection('recipes');
 recipes.sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf());
 
 const anio = new Date().getFullYear();
+const base = import.meta.env.BASE_URL.replace(/\/?$/, '/');
 ---
 
 <Layout>
@@ -78,7 +79,13 @@ const anio = new Date().getFullYear();
 				</svg>
 				Fork &amp; Commit
 			</span>
-			<span class="footer-nota">hecho en la cocina · {anio}</span>
+			<div class="pie-derecha">
+				<span class="footer-nota">hecho en la cocina · {anio}</span>
+				<a href={`${base}admin`} class="admin-link" rel="nofollow">
+					<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13.5 3.5l3 3L7 16H4v-3z"/><path d="M11.5 5.5l3 3"/></svg>
+					admin
+				</a>
+			</div>
 		</footer>
 	</div>
 </Layout>
@@ -312,6 +319,38 @@ const anio = new Date().getFullYear();
 		font-size: 1.3125rem;
 		transform: rotate(1.2deg);
 	}
+
+
+	.pie-derecha {
+		display: flex;
+		align-items: center;
+		gap: 1rem;
+		flex-wrap: wrap;
+	}
+
+	.admin-link {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.4375rem;
+		background: var(--blanco);
+		border: var(--borde-fino);
+		border-radius: var(--r-pildora);
+		box-shadow: 3px 3px 0 var(--lavanda-hondo);
+		padding: 0.4375rem 0.875rem;
+		font-family: var(--cuerpo);
+		font-weight: 700;
+		font-size: 0.8125rem;
+		color: var(--tinta);
+		transition: transform 0.15s ease, box-shadow 0.15s ease;
+	}
+
+	.admin-link:hover {
+		transform: translate(-1px, -1px);
+		box-shadow: 5px 5px 0 var(--lavanda-hondo);
+		color: var(--tinta);
+	}
+
+	.admin-link svg { width: 14px; height: 14px; flex-shrink: 0; }
 
 	.footer-nota {
 		font-family: var(--pixel);
