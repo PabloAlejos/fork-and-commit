@@ -18,6 +18,9 @@ const manifest = {
   icons: [
     { src: `${base}icon-192.png`, sizes: '192x192', type: 'image/png' },
     { src: `${base}icon-512.png`, sizes: '512x512', type: 'image/png' },
+    // La marca cabe en la zona segura de Android (círculo al 80%),
+    // así que sirve también recortada.
+    { src: `${base}icon-512.png`, sizes: '512x512', type: 'image/png', purpose: 'maskable' },
   ],
 };
 

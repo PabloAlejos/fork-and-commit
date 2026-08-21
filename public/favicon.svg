@@ -1,3 +1,12 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
-  <text y="90" font-size="90">🍽️</text>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <rect width="1024" height="1024" fill="#DFD1FB"/>
+  <g transform="translate(0,-33)" fill="none" stroke="#382541" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M402 240 V460 M512 240 V460 M622 240 V460" stroke-width="74"/>
+    <path d="M402 460 H622" stroke-width="74"/>
+    <path d="M512 460 V840" stroke-width="96"/>
+  </g>
+  <g transform="translate(0,-33)" stroke="#382541" stroke-width="24">
+      <circle cx="402" cy="240" r="52" fill="#F7D0B4"/>
+      <circle cx="512" cy="240" r="52" fill="#B9E6CC"/>
+      <circle cx="622" cy="240" r="52" fill="#FCCAD2"/></g>
 </svg>
