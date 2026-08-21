@@ -17,11 +17,12 @@ const { title = 'Fork & Commit' } = Astro.props;
 		<link rel="manifest" href={`${import.meta.env.BASE_URL}manifest.json`} />
 		<meta name="generator" content={Astro.generator} />
 		<meta name="description" content="Fork & Commit — Colección personal de recetas donde el código se encuentra con la cocina." />
+		<meta name="theme-color" content="#F9F3E3" />
 
 		<!-- Google Fonts -->
 		<link rel="preconnect" href="https://fonts.googleapis.com">
 		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-		<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Source+Serif+4:wght@400;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+		<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@800&family=Nunito:wght@400;600;700&family=Silkscreen:wght@400;700&display=swap" rel="stylesheet">
 
 		<title>{title}</title>
 	</head>
@@ -31,7 +32,10 @@ const { title = 'Fork & Commit' } = Astro.props;
 </html>
 
 <style is:global>
-	/* CSS Reset & Global Styles */
+	/* ══════════════════════════════════════════════════════════
+	   Fork & Commit — reset y sistema de diseño
+	   ══════════════════════════════════════════════════════════ */
+
 	*,
 	*::before,
 	*::after {
@@ -40,139 +44,179 @@ const { title = 'Fork & Commit' } = Astro.props;
 		box-sizing: border-box;
 	}
 
-	/* CSS Variables - Fork & Commit Palette
-	   Change colors here to retheme the entire site. */
+	/* ── Tokens ────────────────────────────────────────────────
+	   Los pasteles están definidos en oklch a L .885 / C .058:
+	   misma luminosidad y croma, solo cambia el tono, así que
+	   ninguno pesa más que otro. Cada uno tiene su versión honda
+	   (sombras y bordes punteados) y su versión oscura (texto
+	   encima del pastel). Cambia estos seis tonos y se recolorea
+	   el sitio entero. */
 	:root {
-		/* Surfaces */
-		--parchment: #EDEAE6;
-		--flour: #FFFFFF;
-		--simmer: #C5BFB7;
+		/* Superficies */
+		--crema: #F9F3E3;
+		--blanco: #FEFDFA;
 
-		/* Text */
-		--cast-iron: #2F2B27;
-		--graphite: #6B6560;
+		/* Tinta — ciruela, nunca negro */
+		--tinta: #382541;
+		--tinta-suave: #6D5C75;
 
-		/* Accent colors */
-		--ember: #FF9B51;
-		--ember-dark: #E58840;
-		--coral: #FF9B51;
-		--saffron: #FFBE82;
-		--terminal: #2F2B27;
+		/* Pasteles */
+		--rosa: #FCCAD2;
+		--melocoton: #F7D0B4;
+		--mantequilla: #E4DAAE;
+		--menta: #B9E6CC;
+		--cielo: #B5E0FB;
+		--lavanda: #DFD1FB;
 
-		/* Shadows (derived from accent colors) */
-		--shadow: rgba(47, 43, 39, 0.06);
-		--shadow-ember: rgba(255, 155, 81, 0.25);
-		--shadow-terminal: rgba(47, 43, 39, 0.2);
-		--shadow-card-hover: rgba(47, 43, 39, 0.08);
+		/* Pasteles hondos — sombra dura, bordes punteados */
+		--rosa-hondo: #CD8894;
+		--melocoton-hondo: #C79169;
+		--mantequilla-hondo: #AE9F5F;
+		--menta-hondo: #6DAF8C;
+		--cielo-hondo: #68A7CC;
+		--lavanda-hondo: #A693CC;
+
+		/* Pasteles oscuros — texto sobre pastel */
+		--rosa-ink: #793D49;
+		--melocoton-ink: #75451D;
+		--mantequilla-ink: #61520C;
+		--menta-ink: #1C6142;
+		--cielo-ink: #15597B;
+		--lavanda-ink: #5A477A;
+
+		/* Color activo de un bloque. Cada tarjeta o panel lo
+		   reasigna en su style inline y todo lo de dentro hereda. */
+		--pastel: var(--lavanda);
+		--hondo: var(--lavanda-hondo);
+		--ink: var(--lavanda-ink);
+
+		/* Geometría */
+		--borde: 3px solid var(--tinta);
+		--borde-fino: 2.5px solid var(--tinta);
+		--r-panel: 32px;
+		--r-tarjeta: 26px;
+		--r-caja: 18px;
+		--r-pildora: 999px;
+
+		/* Tipografía */
+		--display: 'Bricolage Grotesque', 'Trebuchet MS', Verdana, sans-serif;
+		--cuerpo: 'Nunito', 'Trebuchet MS', Verdana, sans-serif;
+		--pixel: 'Silkscreen', ui-monospace, 'Courier New', monospace;
+
+		/* Tramas decorativas */
+		--trama-puntos: radial-gradient(rgba(56, 37, 65, 0.16) 2px, transparent 2.2px);
+		--trama-cuadricula: repeating-linear-gradient(0deg, rgba(56, 37, 65, 0.13) 0 1.5px, transparent 1.5px 22px), repeating-linear-gradient(90deg, rgba(56, 37, 65, 0.13) 0 1.5px, transparent 1.5px 22px);
+		--trama-rayas: repeating-linear-gradient(45deg, rgba(56, 37, 65, 0.10) 0 8px, transparent 8px 20px);
+		--trama-ondas: repeating-radial-gradient(circle at 50% 120%, transparent 0 16px, rgba(56, 37, 65, 0.10) 16px 19px);
 	}
 
-	/* Base Styles */
+	/* ── Base ──────────────────────────────────────────────── */
 	html {
-		font-family: 'Space Grotesk', sans-serif;
+		font-family: var(--cuerpo);
 		-webkit-font-smoothing: antialiased;
 		-moz-osx-font-smoothing: grayscale;
 	}
 
 	body {
-		background: var(--parchment);
-		color: var(--cast-iron);
+		overflow-x: clip;
+		background-color: var(--crema);
+		background-image: var(--trama-puntos);
+		background-size: 15px 15px;
+		color: var(--tinta);
 		line-height: 1.6;
 		min-height: 100vh;
 	}
 
-	/* Typography */
 	h1, h2, h3, h4, h5, h6 {
-		font-family: 'Space Grotesk', sans-serif;
-		font-weight: 700;
-		line-height: 1.2;
+		font-family: var(--display);
+		font-weight: 800;
+		line-height: 1.1;
+		letter-spacing: -0.025em;
 	}
 
-	/* Body text in recipe content */
-	.recipe-content p,
-	.recipe-content li {
-		font-family: 'Source Serif 4', serif;
+	a {
+		color: var(--ink);
+		text-decoration: none;
 	}
 
-	/* Smooth animations */
+	a:hover {
+		color: var(--tinta);
+	}
+
+	img {
+		display: block;
+		max-width: 100%;
+	}
+
 	@media (prefers-reduced-motion: no-preference) {
 		html {
 			scroll-behavior: smooth;
 		}
 	}
 
-	/* Tags - Terminal style */
+	/* ── Etiquetas ─────────────────────────────────────────────
+	   Píldoras pastel. Heredan --pastel/--hondo/--ink del bloque
+	   que las contiene, así que la misma clase se pinta distinta
+	   en cada tarjeta sin una sola regla extra. */
 	.tag {
-		background-color: var(--terminal);
-		color: rgba(255, 255, 255, 0.9);
-		padding: 0.35rem 0.85rem;
-		border-radius: 4px;
-		font-size: 0.75rem;
-		font-weight: 500;
-		letter-spacing: 0.02em;
-		border: none;
-		cursor: default;
-		font-family: 'JetBrains Mono', monospace;
 		display: inline-block;
+		background: var(--pastel);
+		color: var(--ink);
+		border: 2px solid var(--tinta);
+		border-radius: var(--r-pildora);
+		padding: 4px 11px;
+		font-family: var(--cuerpo);
+		font-weight: 700;
+		font-size: 0.72rem;
+		line-height: 1.5;
+		cursor: default;
 		text-decoration: none;
 	}
 
 	.tag-clickable,
 	.tag-link {
 		cursor: pointer;
-		transition: all 0.2s ease;
+		transition: transform 0.15s ease, box-shadow 0.15s ease;
 	}
 
 	.tag-clickable:hover,
 	.tag-link:hover {
-		background-color: var(--ember);
-		color: white;
-		transform: translateY(-2px);
-		box-shadow: 0 2px 8px var(--shadow-ember);
+		transform: translate(-1px, -1px);
+		box-shadow: 3px 3px 0 var(--hondo);
+		color: var(--ink);
 	}
 
-	/* Tag activo */
 	.tag-clickable.active {
-		background-color: var(--ember);
-		box-shadow: 0 0 0 3px var(--shadow-ember);
-		transform: scale(1.05);
-		font-weight: 600;
-		color: white;
-	}
-
-	.tag-chip {
-		background: var(--flour);
-		border: 2px solid var(--terminal);
-		color: var(--terminal);
-		padding: 0.5rem 1rem;
-		border-radius: 4px;
-		font-size: 0.85rem;
-		font-weight: 500;
-		cursor: pointer;
-		transition: all 0.2s ease;
-		letter-spacing: 0.02em;
-		font-family: 'JetBrains Mono', monospace;
-	}
-
-	.tag-chip:hover {
-		background: var(--terminal);
-		color: white;
-		transform: translateY(-2px);
-	}
-
-	.tag-chip.active {
-		background: var(--terminal);
-		color: white;
-		box-shadow: 0 2px 8px var(--shadow-terminal);
+		background: var(--tinta);
+		color: var(--crema);
+		box-shadow: 3px 3px 0 var(--hondo);
 	}
 
 	.tag-more {
-		background-color: var(--saffron);
-		color: var(--cast-iron);
-		padding: 0.35rem 0.85rem;
-		border-radius: 4px;
-		font-size: 0.75rem;
-		font-weight: 600;
 		display: inline-block;
-		font-family: 'JetBrains Mono', monospace;
+		background: var(--blanco);
+		color: var(--tinta);
+		border: 2px solid var(--tinta);
+		border-radius: var(--r-pildora);
+		padding: 4px 11px;
+		font-family: var(--pixel);
+		font-size: 0.62rem;
+		line-height: 1.7;
+	}
+
+	/* ── Accesibilidad ─────────────────────────────────────── */
+	:focus-visible {
+		outline: 3px solid var(--tinta);
+		outline-offset: 3px;
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		*,
+		*::before,
+		*::after {
+			animation-duration: 0.01ms !important;
+			animation-iteration-count: 1 !important;
+			transition-duration: 0.01ms !important;
+		}
 	}
 </style>

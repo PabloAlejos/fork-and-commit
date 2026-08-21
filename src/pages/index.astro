@@ -5,181 +5,367 @@ import RecipeCard from '../components/RecipeCard.astro';
 import { getCollection } from 'astro:content';
 
 const recipes = await getCollection('recipes');
+recipes.sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf());
+
+const anio = new Date().getFullYear();
 ---
 
 <Layout>
-	<!-- Header -->
-	<header class="header">
-		<div class="header-inner">
-			<h1 class="site-title">Fork & Commit</h1>
-			<div class="tagline"><span class="prompt">$</span> Where recipes are never half-baked.<span class="cursor">_</span></div>
-		</div>
-		<div class="header-border"></div>
-	</header>
+	<div class="pagina">
+		<!-- Manchas de fondo -->
+		<div class="mancha mancha-a" aria-hidden="true"></div>
+		<div class="mancha mancha-b" aria-hidden="true"></div>
 
-	<main class="container">
-		<!-- Componente de búsqueda y filtros -->
-		<RecipeFilters />
+		<!-- Barra -->
+		<header class="barra">
+			<span class="logo">
+				<svg class="estrella" viewBox="0 0 24 24" aria-hidden="true">
+					<path d="M12 0c.7 6.5 4.8 10.6 12 12-7.2 1.4-11.3 5.5-12 12-.7-6.5-4.8-10.6-12-12 7.2-1.4 11.3-5.5 12-12z" fill="currentColor"/>
+				</svg>
+				Fork &amp; Commit
+			</span>
+			<span class="contador">{recipes.length} recetas</span>
+		</header>
 
-		<div class="recipes-grid">
-			{recipes.map((recipe, i) => (
-				<div class="card-wrapper" style={`--delay: ${i * 0.06}s`}>
-					<RecipeCard
-						title={recipe.data.title}
-						slug={recipe.slug}
-						category={recipe.data.category}
-						totalTime={recipe.data.total_time}
-						difficulty={recipe.data.difficulty}
-						servings={recipe.data.servings}
-						tags={recipe.data.tags}
-					/>
-				</div>
-			))}
-		</div>
-	</main>
+		<!-- Cabecera -->
+		<section class="hero">
+			<span class="eyebrow">recetario personal</span>
 
-	<!-- Footer -->
-	<footer class="site-footer">
-		<span class="footer-cmd">git cook --with-love</span>
-	</footer>
+			<h1>Fork <span class="amp">&amp;</span> Commit</h1>
+
+			<svg class="onda" viewBox="0 0 120 14" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" preserveAspectRatio="none" aria-hidden="true">
+				<path d="M3 7q7.5-6 15 0t15 0t15 0t15 0t15 0t15 0t15 0"/>
+			</svg>
+
+			<p class="lema">Colección personal de recetas donde el código se encuentra con la cocina.</p>
+		</section>
+
+		<main class="contenedor">
+			<RecipeFilters />
+
+			<div class="seccion-titulo">
+				<h2>El recetario</h2>
+				<svg class="onda onda-inline" viewBox="0 0 120 14" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" preserveAspectRatio="none" aria-hidden="true">
+					<path d="M3 7q7.5-6 15 0t15 0t15 0t15 0t15 0t15 0t15 0"/>
+				</svg>
+			</div>
+
+			<div class="recipes-grid">
+				{recipes.map((recipe, i) => (
+					<div class="card-wrapper" style={`--delay: ${i * 0.05}s`}>
+						<RecipeCard
+							title={recipe.data.title}
+							slug={recipe.slug}
+							category={recipe.data.category}
+							totalTime={recipe.data.total_time}
+							difficulty={recipe.data.difficulty}
+							servings={recipe.data.servings}
+							tags={recipe.data.tags}
+							image={recipe.data.image}
+							index={i}
+						/>
+					</div>
+				))}
+			</div>
+		</main>
+
+		<div class="damero" aria-hidden="true"></div>
+
+		<footer class="site-footer">
+			<span class="logo logo-pie">
+				<svg class="estrella" viewBox="0 0 24 24" aria-hidden="true">
+					<path d="M12 0c.7 6.5 4.8 10.6 12 12-7.2 1.4-11.3 5.5-12 12-.7-6.5-4.8-10.6-12-12 7.2-1.4 11.3-5.5 12-12z" fill="currentColor"/>
+				</svg>
+				Fork &amp; Commit
+			</span>
+			<span class="footer-nota">hecho en la cocina · {anio}</span>
+		</footer>
+	</div>
 </Layout>
 
 <style>
-	/* Header */
-	.header {
-		background: var(--terminal);
-		padding: 1.5rem 2rem 0;
-		text-align: center;
+	.pagina {
 		position: relative;
+		overflow-x: clip;
 	}
 
-	.header-inner {
-		padding-bottom: 1.5rem;
+	/* ── Manchas ───────────────────────────────────────────── */
+	.mancha {
+		position: absolute;
+		z-index: 0;
+		opacity: 0.55;
+		pointer-events: none;
 	}
 
-	.header-border {
-		height: 3px;
-		background: linear-gradient(90deg, var(--ember), var(--saffron));
+	.mancha-a {
+		top: 26rem;
+		left: -9rem;
+		width: 24rem;
+		height: 21rem;
+		background: var(--menta);
+		border-radius: 62% 38% 46% 54% / 55% 42% 58% 45%;
 	}
 
-	.site-title {
-		font-family: 'Space Grotesk', sans-serif;
-		font-size: 2rem;
-		color: var(--parchment);
-		font-weight: 700;
+	.mancha-b {
+		top: 7rem;
+		right: -7rem;
+		width: 20rem;
+		height: 19rem;
+		background: var(--rosa);
+		border-radius: 45% 55% 62% 38% / 48% 58% 42% 52%;
+	}
+
+	/* ── Barra ─────────────────────────────────────────────── */
+	.barra {
+		position: relative;
+		z-index: 1;
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 1.5rem;
+		padding: 1.625rem 4rem;
+	}
+
+	.logo {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.875rem;
+		background: var(--mantequilla);
+		border: var(--borde);
+		border-radius: var(--r-pildora);
+		box-shadow: 5px 5px 0 var(--mantequilla-hondo);
+		padding: 0.75rem 1.5rem;
+		font-family: var(--display);
+		font-weight: 800;
+		font-size: 1.5rem;
 		letter-spacing: -0.02em;
-		margin-bottom: 0.35rem;
+		color: var(--tinta);
+		transform: rotate(-1.4deg);
 	}
 
-	.tagline {
-		font-family: 'JetBrains Mono', monospace;
-		color: var(--saffron);
-		font-size: 0.85rem;
-		font-weight: 400;
+	.estrella {
+		width: 18px;
+		height: 18px;
+		flex-shrink: 0;
 	}
 
-	.prompt {
-		color: var(--coral);
-		margin-right: 0.25rem;
+	.contador {
+		display: inline-flex;
+		align-items: center;
+		background: var(--cielo);
+		border: var(--borde);
+		border-radius: var(--r-pildora);
+		box-shadow: 4px 4px 0 var(--cielo-hondo);
+		padding: 0.75rem 1.25rem;
+		font-family: var(--pixel);
+		font-size: 0.75rem;
+		color: var(--tinta);
+		white-space: nowrap;
 	}
 
-	.cursor {
-		color: var(--ember);
-		animation: blink 1s step-end infinite;
+	/* ── Cabecera ──────────────────────────────────────────── */
+	.hero {
+		position: relative;
+		z-index: 1;
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		text-align: center;
+		padding: 2.75rem 4rem 3.5rem;
 	}
 
-	@keyframes blink {
-		0%, 100% { opacity: 1; }
-		50% { opacity: 0; }
+	.eyebrow {
+		background: var(--lavanda);
+		border: var(--borde-fino);
+		border-radius: var(--r-pildora);
+		box-shadow: 3px 3px 0 var(--lavanda-hondo);
+		padding: 0.5rem 1.125rem;
+		font-family: var(--pixel);
+		font-size: 0.75rem;
+		letter-spacing: 0.06em;
+		color: var(--lavanda-ink);
+		transform: rotate(1.6deg);
+		margin-bottom: 1.625rem;
 	}
 
-	/* Container */
-	.container {
-		max-width: 1200px;
+	.hero h1 {
+		font-family: var(--display);
+		font-weight: 800;
+		font-size: clamp(2.75rem, 8vw, 5.5rem);
+		line-height: 0.98;
+		letter-spacing: -0.035em;
+		color: var(--tinta);
+		max-width: min(58rem, 100%);
+		text-wrap: pretty;
+	}
+
+	.amp {
+		color: var(--rosa-ink);
+	}
+
+	.onda {
+		width: 20rem;
+		max-width: 70%;
+		height: 1.125rem;
+		color: var(--melocoton-hondo);
+		margin: 0.625rem 0 1.375rem;
+	}
+
+	.lema {
+		font-weight: 600;
+		font-size: 1.1875rem;
+		line-height: 1.6;
+		color: var(--tinta-suave);
+		max-width: min(39rem, 100%);
+		text-wrap: pretty;
+	}
+
+	/* ── Contenedor ────────────────────────────────────────── */
+	.contenedor {
+		position: relative;
+		z-index: 1;
+		max-width: 87.5rem;
 		margin: 0 auto;
-		padding: 2rem 1rem;
+		padding: 0 4rem;
 	}
 
-	/* Recipes grid - Mobile first */
+	.seccion-titulo {
+		display: flex;
+		align-items: center;
+		gap: 1.125rem;
+		margin-bottom: 2.125rem;
+	}
+
+	.seccion-titulo h2 {
+		font-family: var(--display);
+		font-weight: 800;
+		font-size: 2.25rem;
+		letter-spacing: -0.025em;
+		color: var(--tinta);
+		background: var(--menta);
+		border: var(--borde);
+		border-radius: var(--r-caja);
+		box-shadow: 5px 5px 0 var(--menta-hondo);
+		padding: 0.5rem 1.375rem;
+		transform: rotate(-1.2deg);
+	}
+
+	.onda-inline {
+		flex: 1;
+		width: auto;
+		max-width: none;
+		height: 1rem;
+		margin: 0;
+		color: var(--cielo-hondo);
+	}
+
+	/* ── Rejilla ───────────────────────────────────────────── */
 	.recipes-grid {
 		display: grid;
 		grid-template-columns: 1fr;
-		gap: 1.5rem;
+		gap: 2.875rem 2.5rem;
 	}
 
-	/* Card staggered animation */
 	.card-wrapper {
 		animation: fadeInUp 0.4s ease both;
 		animation-delay: var(--delay);
 	}
 
 	@keyframes fadeInUp {
-		from {
-			opacity: 0;
-			transform: translateY(16px);
-		}
-		to {
-			opacity: 1;
-			transform: translateY(0);
-		}
+		from { opacity: 0; transform: translateY(16px); }
+		to   { opacity: 1; transform: translateY(0); }
 	}
 
-	/* Footer */
+	@media (min-width: 44rem) {
+		.recipes-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+	}
+
+	@media (min-width: 68rem) {
+		.recipes-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+	}
+
+	/* ── Pie ───────────────────────────────────────────────── */
+	.damero {
+		position: relative;
+		z-index: 1;
+		height: 22px;
+		margin-top: 4.75rem;
+		background-image: conic-gradient(var(--tinta) 0 25%, transparent 0 50%, var(--tinta) 0 75%, transparent 0);
+		background-size: 22px 22px;
+	}
+
 	.site-footer {
-		text-align: center;
-		padding: 2rem 1rem;
-		border-top: 1px solid var(--simmer);
+		position: relative;
+		z-index: 1;
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 1.5rem;
+		flex-wrap: wrap;
+		padding: 2.75rem 4rem 3.5rem;
+		background: var(--lavanda);
 	}
 
-	.footer-cmd {
-		font-family: 'JetBrains Mono', monospace;
-		font-size: 0.8rem;
-		color: var(--graphite);
-		opacity: 0.7;
+	.logo-pie {
+		background: var(--blanco);
+		box-shadow: 4px 4px 0 var(--lavanda-hondo);
+		font-size: 1.3125rem;
+		transform: rotate(1.2deg);
 	}
 
-	/* Tablet and up */
-	@media (min-width: 640px) {
-		.recipes-grid {
-			grid-template-columns: repeat(2, 1fr);
-		}
+	.footer-nota {
+		font-family: var(--pixel);
+		font-size: 0.75rem;
+		color: var(--lavanda-ink);
 	}
 
-	/* Desktop */
-	@media (min-width: 1024px) {
-		.recipes-grid {
-			grid-template-columns: repeat(3, 1fr);
-		}
-	}
-
-	/* Responsive */
-	@media (max-width: 640px) {
-		.header {
-			padding: 1rem 1.5rem 0;
+	/* ── Móvil ─────────────────────────────────────────────── */
+	@media (max-width: 40rem) {
+		.barra {
+			padding: 1rem 1.125rem;
+			gap: 0.75rem;
 		}
 
-		.site-title {
-			font-size: 1.5rem;
+		.logo {
+			font-size: 1.125rem;
+			padding: 0.625rem 1.125rem;
+			gap: 0.625rem;
 		}
 
-		.tagline {
-			font-size: 0.75rem;
+		.estrella { width: 14px; height: 14px; }
+
+		.contador {
+			padding: 0.625rem 0.875rem;
+			font-size: 0.625rem;
 		}
 
-		.container {
-			padding: 1.5rem 0.75rem;
+		.hero {
+			padding: 0.5rem 1.125rem 2rem;
+			align-items: flex-start;
+			text-align: left;
 		}
+
+		.onda { margin: 0.75rem 0 1.125rem; }
+
+		.lema { font-size: 1rem; }
+
+		.contenedor { padding: 0 1.125rem; }
+
+		.seccion-titulo h2 { font-size: 1.5rem; padding: 0.3125rem 1rem; }
+
+		.site-footer { padding: 2rem 1.125rem 2.5rem; }
+
+		.mancha-a { top: 20rem; left: -11rem; }
+		.mancha-b { display: none; }
 	}
 </style>
 
 <script>
-	// Manejar clics en tags de las tarjetas
+	// Clic en una etiqueta de tarjeta → filtrar por ella
 	document.addEventListener('DOMContentLoaded', () => {
-		// Delegación de eventos para los tags clickables
 		document.addEventListener('click', (e) => {
 			const target = e.target as HTMLElement;
 
-			// Si clickaron en un tag clickable
 			if (target.classList.contains('tag-clickable')) {
 				e.preventDefault();
 				e.stopPropagation();
@@ -187,25 +373,14 @@ const recipes = await getCollection('recipes');
 				const tag = target.dataset.tag;
 				if (!tag) return;
 
-				// Disparar evento personalizado para que RecipeFilters lo capture
-				const event = new CustomEvent('selectTag', { detail: { tag } });
-				window.dispatchEvent(event);
-			}
-
-			// Si clickaron en un link de receta, dejarlo pasar
-			if (target.closest('.recipe-card') && !target.classList.contains('tag-clickable')) {
-				return;
+				window.dispatchEvent(new CustomEvent('selectTag', { detail: { tag } }));
 			}
 		});
 
-		// Procesar parámetro ?tag= en la URL
-		const urlParams = new URLSearchParams(window.location.search);
-		const tagFromUrl = urlParams.get('tag');
-
+		// ?tag= en la URL
+		const tagFromUrl = new URLSearchParams(window.location.search).get('tag');
 		if (tagFromUrl) {
-			const event = new CustomEvent('selectTag', { detail: { tag: tagFromUrl } });
-			window.dispatchEvent(event);
-
+			window.dispatchEvent(new CustomEvent('selectTag', { detail: { tag: tagFromUrl } }));
 			window.history.replaceState({}, '', window.location.pathname);
 		}
 	});

@@ -1,541 +1,633 @@
 ---
-// Este componente no necesita props, ya que el filtrado se hace en el cliente
+// No props needed — filtering happens client-side
 ---
 
-<div class="filters-container">
-	<!-- Barra de búsqueda -->
-	<div class="search-bar">
-		<svg class="search-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-			<circle cx="8.5" cy="8.5" r="5.5" />
-			<path d="M12.5 12.5L17 17" />
-		</svg>
-		<input
-			type="text"
-			id="search-input"
-			placeholder="> Buscar recetas..."
-			class="search-input"
-		/>
-		<button id="clear-search" class="clear-btn" style="display: none;">✕</button>
-	</div>
+<div class="cmd-panel">
 
-	<!-- Toggle de filtros para mobile -->
-	<button id="filters-toggle" class="filters-toggle">
-		<span>Filtros</span>
-		<span class="toggle-icon">▼</span>
-	</button>
+  <!-- Buscador -->
+  <div class="search-line">
+    <svg class="search-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" aria-hidden="true">
+      <circle cx="9" cy="9" r="6" />
+      <path d="M13.5 13.5L17 17" />
+    </svg>
+    <input
+      type="text"
+      id="search-input"
+      class="search-input"
+      placeholder="buscar receta o ingrediente"
+      autocomplete="off"
+      spellcheck="false"
+      aria-label="Buscar receta o ingrediente"
+    />
+    <button id="clear-search" class="clear-search" aria-label="Limpiar búsqueda" style="display:none">
+      <svg width="11" height="11" viewBox="0 0 10 10" fill="none" aria-hidden="true">
+        <path d="M1 1l8 8M9 1L1 9" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+    </button>
+  </div>
 
-	<!-- Panel de filtros -->
-	<div id="filters-panel" class="filters-panel">
-		<!-- Indicador de tag activo -->
-		<div id="active-tag-indicator" class="active-tag-indicator" style="display: none;">
-			<span class="active-tag-label">Filtrando por:</span>
-			<span id="active-tag-text" class="active-tag-badge"></span>
-			<button id="clear-active-tag" class="clear-tag-btn" title="Quitar filtro">✕</button>
-		</div>
+  <!-- Desplegar filtros -->
+  <button id="filters-toggle" class="filters-toggle" aria-expanded="false">
+    <span class="toggle-label">filtros</span>
+    <svg class="toggle-chevron" width="12" height="12" viewBox="0 0 10 10" fill="none" aria-hidden="true">
+      <path d="M2 3.5L5 6.5L8 3.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+  </button>
 
-		<div class="filters-grid">
-			<!-- Filtro por Categoría -->
-			<div class="filter-group">
-				<label class="filter-label">Categoría</label>
-				<select id="filter-category" class="filter-select">
-					<option value="">Todas</option>
-				</select>
-			</div>
+  <!-- Filas plegables -->
+  <div id="filters-collapse" class="filters-collapse">
+    <div class="filter-rows">
 
-			<!-- Filtro por Dificultad -->
-			<div class="filter-group">
-				<label class="filter-label">Dificultad</label>
-				<select id="filter-difficulty" class="filter-select">
-					<option value="">Todas</option>
-					<option value="Fácil">Fácil</option>
-					<option value="Media">Media</option>
-					<option value="Difícil">Difícil</option>
-				</select>
-			</div>
+      <div class="filter-row" id="row-difficulty">
+        <span class="flag">dificultad</span>
+        <div class="pills" id="pills-difficulty">
+          <button class="pill active" data-filter="difficulty" data-value="">todas</button>
+          <button class="pill" data-filter="difficulty" data-value="Fácil">fácil</button>
+          <button class="pill" data-filter="difficulty" data-value="Media">media</button>
+          <button class="pill" data-filter="difficulty" data-value="Difícil">difícil</button>
+        </div>
+      </div>
 
-			<!-- Filtro por Tiempo -->
-			<div class="filter-group">
-				<label class="filter-label">Tiempo máximo</label>
-				<select id="filter-time" class="filter-select">
-					<option value="">Cualquiera</option>
-					<option value="30">Hasta 30 min</option>
-					<option value="60">Hasta 1 hora</option>
-					<option value="90">Hasta 1.5 horas</option>
-				</select>
-			</div>
-		</div>
+      <div class="filter-row" id="row-time">
+        <span class="flag">tiempo</span>
+        <div class="pills" id="pills-time">
+          <button class="pill active" data-filter="time" data-value="">cualquiera</button>
+          <button class="pill" data-filter="time" data-value="30">≤ 30 min</button>
+          <button class="pill" data-filter="time" data-value="60">≤ 1 hora</button>
+          <button class="pill" data-filter="time" data-value="90">≤ 1.5 h</button>
+        </div>
+      </div>
 
-		<!-- Botón para limpiar filtros -->
-		<button id="clear-filters" class="clear-filters-btn">
-			Limpiar filtros
-		</button>
-	</div>
+      <div class="filter-row" id="row-category">
+        <span class="flag">categoría</span>
+        <div class="pills" id="pills-category">
+          <button class="pill active" data-filter="category" data-value="">todas</button>
+        </div>
+      </div>
 
-	<!-- Contador de resultados -->
-	<div id="results-count" class="results-count"></div>
+    </div>
+  </div>
+
+  <!-- Etiqueta activa: fuera del plegable, siempre visible -->
+  <div class="filter-row tag-filter-row" id="tag-row" style="display:none">
+    <span class="flag">etiqueta</span>
+    <span class="tag-chip-active">
+      <span class="tag-hash">#</span><span id="active-tag-text"></span>
+      <button id="clear-active-tag" class="chip-x" aria-label="Quitar etiqueta">
+        <svg width="9" height="9" viewBox="0 0 8 8" fill="none" aria-hidden="true">
+          <path d="M1 1l6 6M7 1L1 7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+      </button>
+    </span>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- Recuento -->
+  <div class="status-bar">
+    <svg class="status-star" viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M12 0c.7 6.5 4.8 10.6 12 12-7.2 1.4-11.3 5.5-12 12-.7-6.5-4.8-10.6-12-12 7.2-1.4 11.3-5.5 12-12z" fill="currentColor"/>
+    </svg>
+    <span id="results-count" class="results-text"></span>
+    <button id="clear-filters" class="reset-btn" style="display:none">quitar filtros</button>
+  </div>
+
 </div>
 
 <style>
-	.filters-container {
-		margin-bottom: 2rem;
-	}
+  /* ── Contenedor ────────────────────────────────────────────
+     Bloque centrado sobre la crema, no una caja: las piezas
+     flotan como pegatinas sueltas. */
+  .cmd-panel {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 3rem;
+  }
 
-	/* Barra de búsqueda */
-	.search-bar {
-		position: relative;
-		display: flex;
-		align-items: center;
-		background: var(--flour);
-		border-radius: 8px;
-		box-shadow: 0 2px 8px var(--shadow);
-		padding: 0.75rem 1rem;
-		margin-bottom: 1rem;
-		border: 1px solid var(--simmer);
-	}
+  /* ── Buscador ──────────────────────────────────────────── */
+  .search-line {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    width: 100%;
+    max-width: 600px;
+    background: var(--blanco);
+    border: var(--borde);
+    border-radius: var(--r-pildora);
+    box-shadow: 4px 4px 0 var(--cielo-hondo);
+    padding: 0.875rem 1.375rem;
+  }
 
-	.search-icon {
-		width: 18px;
-		height: 18px;
-		margin-right: 0.75rem;
-		color: var(--graphite);
-		flex-shrink: 0;
-	}
+  .search-icon {
+    width: 19px;
+    height: 19px;
+    flex-shrink: 0;
+    color: var(--tinta);
+  }
 
-	.search-input {
-		flex: 1;
-		border: none;
-		outline: none;
-		font-size: 0.9rem;
-		font-family: 'JetBrains Mono', monospace;
-		color: var(--cast-iron);
-		background: transparent;
-		caret-color: var(--ember);
-	}
+  .search-input {
+    flex: 1;
+    min-width: 0;
+    border: none;
+    outline: none;
+    background: transparent;
+    font-family: var(--cuerpo);
+    font-weight: 600;
+    font-size: 0.9375rem;
+    color: var(--tinta);
+    caret-color: var(--rosa-ink);
+  }
 
-	.search-input::placeholder {
-		color: var(--graphite);
-		opacity: 0.5;
-	}
+  .search-input::placeholder {
+    color: var(--tinta-suave);
+  }
 
-	.clear-btn {
-		background: var(--ember);
-		color: white;
-		border: none;
-		border-radius: 50%;
-		width: 24px;
-		height: 24px;
-		cursor: pointer;
-		font-size: 0.875rem;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		transition: background 0.2s;
-	}
+  .clear-search {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    flex-shrink: 0;
+    background: var(--rosa);
+    border: 2px solid var(--tinta);
+    border-radius: var(--r-pildora);
+    color: var(--tinta);
+    cursor: pointer;
+    transition: transform 0.15s ease;
+  }
 
-	.clear-btn:hover {
-		background: var(--ember-dark);
-	}
+  .clear-search:hover {
+    transform: scale(1.12);
+  }
 
-	/* Toggle de filtros (mobile) */
-	.filters-toggle {
-		width: 100%;
-		background: var(--flour);
-		border: 2px solid var(--simmer);
-		border-radius: 8px;
-		padding: 0.875rem 1rem;
-		font-size: 0.9rem;
-		font-weight: 600;
-		color: var(--cast-iron);
-		cursor: pointer;
-		display: flex;
-		justify-content: space-between;
-		align-items: center;
-		transition: all 0.3s ease;
-		margin-bottom: 1rem;
-		font-family: 'Space Grotesk', sans-serif;
-	}
+  /* ── Botón de filtros ──────────────────────────────────── */
+  .filters-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: var(--mantequilla);
+    border: var(--borde-fino);
+    border-radius: var(--r-pildora);
+    box-shadow: 3px 3px 0 var(--mantequilla-hondo);
+    padding: 0.6875rem 1.25rem;
+    font-family: var(--cuerpo);
+    font-weight: 700;
+    font-size: 0.875rem;
+    color: var(--tinta);
+    cursor: pointer;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+  }
 
-	.filters-toggle:hover {
-		border-color: var(--terminal);
-		background: var(--terminal);
-		color: white;
-	}
+  .filters-toggle:hover {
+    transform: translate(-1px, -1px);
+    box-shadow: 5px 5px 0 var(--mantequilla-hondo);
+  }
 
-	.toggle-icon {
-		transition: transform 0.3s ease;
-		font-size: 0.875rem;
-	}
+  .filters-toggle[aria-expanded="true"] {
+    background: var(--tinta);
+    color: var(--crema);
+  }
 
-	.filters-toggle.active .toggle-icon {
-		transform: rotate(180deg);
-	}
+  .toggle-chevron {
+    transition: transform 0.2s ease;
+  }
 
-	/* Panel de filtros */
-	.filters-panel {
-		background: var(--flour);
-		border-radius: 8px;
-		box-shadow: 0 0 0 rgba(0, 0, 0, 0);
-		padding: 0 1.5rem;
-		margin-bottom: 0;
-		max-height: 0;
-		overflow: hidden;
-		transition: max-height 0.3s ease, padding 0.3s ease, box-shadow 0.3s ease, margin-bottom 0.3s ease;
-	}
+  .filters-toggle[aria-expanded="true"] .toggle-chevron {
+    transform: rotate(180deg);
+  }
 
-	.filters-panel.open {
-		max-height: 500px;
-		padding: 1.5rem;
-		margin-bottom: 1rem;
-		box-shadow: 0 2px 8px var(--shadow);
-	}
+  /* ── Plegable ──────────────────────────────────────────── */
+  .filters-collapse {
+    display: grid;
+    grid-template-rows: 0fr;
+    width: 100%;
+    transition: grid-template-rows 0.25s ease;
+  }
 
-	.filters-panel.desktop-visible {
-		max-height: none;
-		padding: 1.5rem;
-		margin-bottom: 1rem;
-		box-shadow: 0 2px 8px var(--shadow);
-	}
+  .filters-collapse.open {
+    grid-template-rows: 1fr;
+  }
 
-	/* Active tag indicator */
-	.active-tag-indicator {
-		background: var(--terminal);
-		border-radius: 6px;
-		padding: 1rem 1.25rem;
-		margin-bottom: 1.5rem;
-		display: flex;
-		align-items: center;
-		gap: 0.75rem;
-		box-shadow: 0 4px 12px var(--shadow-terminal);
-		animation: slideDown 0.3s ease;
-	}
+  .filters-collapse > .filter-rows {
+    overflow: hidden;
+  }
 
-	@keyframes slideDown {
-		from {
-			opacity: 0;
-			transform: translateY(-10px);
-		}
-		to {
-			opacity: 1;
-			transform: translateY(0);
-		}
-	}
+  .filter-rows {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.75rem;
+    padding-top: 0;
+    transition: padding-top 0.25s ease;
+  }
 
-	.active-tag-label {
-		color: rgba(255, 255, 255, 0.7);
-		font-size: 0.8rem;
-		font-weight: 500;
-		font-family: 'JetBrains Mono', monospace;
-	}
+  .filters-collapse.open > .filter-rows {
+    padding-top: 0.75rem;
+  }
 
-	.active-tag-badge {
-		background: var(--ember);
-		color: white;
-		padding: 0.35rem 0.85rem;
-		border-radius: 4px;
-		font-size: 0.8rem;
-		font-weight: 500;
-		flex: 1;
-		font-family: 'JetBrains Mono', monospace;
-	}
+  .filter-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+  }
 
-	.clear-tag-btn {
-		background: rgba(255, 255, 255, 0.1);
-		border: 1px solid rgba(255, 255, 255, 0.3);
-		color: white;
-		border-radius: 50%;
-		width: 28px;
-		height: 28px;
-		cursor: pointer;
-		font-size: 1rem;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		transition: all 0.2s;
-		font-weight: bold;
-	}
+  .flag {
+    font-family: var(--pixel);
+    font-size: 0.625rem;
+    letter-spacing: 0.04em;
+    color: var(--tinta-suave);
+    flex-shrink: 0;
+  }
 
-	.clear-tag-btn:hover {
-		background: var(--ember);
-		border-color: var(--ember);
-		transform: rotate(90deg);
-	}
+  /* ── Píldoras ──────────────────────────────────────────────
+     Cada grupo lleva su pastel. Las de categoría las crea el
+     script sin más clase que .pill, por eso el color se aplica
+     desde el contenedor y no desde la píldora. */
+  .pills {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.4375rem;
+  }
 
-	.filters-grid {
-		display: grid;
-		grid-template-columns: 1fr;
-		gap: 1.25rem;
-		margin-bottom: 1.25rem;
-	}
+  #pills-difficulty { --pastel: var(--rosa);  --hondo: var(--rosa-hondo); }
+  #pills-time       { --pastel: var(--cielo); --hondo: var(--cielo-hondo); }
+  #pills-category   { --pastel: var(--menta); --hondo: var(--menta-hondo); }
 
-	.filter-group {
-		display: flex;
-		flex-direction: column;
-		gap: 0.5rem;
-	}
+  .pill {
+    background: var(--pastel);
+    border: var(--borde-fino);
+    border-radius: var(--r-pildora);
+    box-shadow: 3px 3px 0 var(--hondo);
+    padding: 0.625rem 1.125rem;
+    font-family: var(--cuerpo);
+    font-weight: 700;
+    font-size: 0.875rem;
+    line-height: 1.3;
+    color: var(--tinta);
+    cursor: pointer;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+  }
 
-	.filter-label {
-		font-size: 0.8rem;
-		font-weight: 600;
-		color: var(--cast-iron);
-		text-transform: uppercase;
-		letter-spacing: 0.5px;
-		font-family: 'Space Grotesk', sans-serif;
-	}
+  .pill:hover:not(.active) {
+    transform: translate(-1px, -1px);
+    box-shadow: 5px 5px 0 var(--hondo);
+  }
 
-	.filter-select {
-		padding: 0.75rem;
-		border: 2px solid var(--simmer);
-		border-radius: 6px;
-		font-size: 0.9rem;
-		font-family: 'Space Grotesk', sans-serif;
-		color: var(--cast-iron);
-		background: var(--flour);
-		cursor: pointer;
-		transition: border-color 0.2s;
-	}
+  .pill.active {
+    background: var(--tinta);
+    color: var(--crema);
+  }
 
-	.filter-select:focus {
-		outline: none;
-		border-color: var(--coral);
-	}
+  /* ── Etiqueta activa ───────────────────────────────────── */
+  .tag-filter-row {
+    animation: row-in 0.18s ease;
+  }
 
-	.clear-filters-btn {
-		width: 100%;
-		padding: 0.75rem;
-		background: var(--terminal);
-		color: rgba(255, 255, 255, 0.9);
-		border: none;
-		border-radius: 6px;
-		font-weight: 600;
-		cursor: pointer;
-		transition: background 0.2s;
-		font-family: 'Space Grotesk', sans-serif;
-		font-size: 0.85rem;
-	}
+  @keyframes row-in {
+    from { opacity: 0; transform: translateY(-4px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
 
-	.clear-filters-btn:hover {
-		background: var(--cast-iron);
-	}
+  .tag-chip-active {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4375rem;
+    background: var(--lavanda);
+    color: var(--lavanda-ink);
+    border: var(--borde-fino);
+    border-radius: var(--r-pildora);
+    box-shadow: 3px 3px 0 var(--lavanda-hondo);
+    padding: 0.4375rem 0.4375rem 0.4375rem 0.875rem;
+    font-family: var(--cuerpo);
+    font-weight: 700;
+    font-size: 0.8125rem;
+  }
 
-	/* Contador de resultados */
-	.results-count {
-		text-align: center;
-		color: var(--graphite);
-		font-size: 0.8rem;
-		font-weight: 500;
-		margin-bottom: 1rem;
-		font-family: 'JetBrains Mono', monospace;
-	}
+  .tag-hash {
+    opacity: 0.5;
+  }
 
-	/* Tablet y Desktop */
-	@media (min-width: 640px) {
-		.filters-toggle {
-			display: none;
-		}
+  .chip-x {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    flex-shrink: 0;
+    background: var(--blanco);
+    border: 2px solid var(--tinta);
+    border-radius: var(--r-pildora);
+    color: var(--tinta);
+    cursor: pointer;
+    transition: transform 0.15s ease;
+  }
 
-		.filters-panel {
-			max-height: none;
-			padding: 1.5rem;
-		}
+  .chip-x:hover {
+    transform: scale(1.12);
+  }
 
-		.filters-grid {
-			grid-template-columns: repeat(3, 1fr);
-		}
-	}
+  /* ── Separador y recuento ──────────────────────────────── */
+  .divider {
+    width: 100%;
+    max-width: 600px;
+    height: 0;
+    border-top: 3px dotted var(--lavanda-hondo);
+    margin-top: 0.5rem;
+  }
 
-	@media (min-width: 1024px) {
-		.filters-grid {
-			grid-template-columns: repeat(4, 1fr);
-			gap: 1.5rem;
-		}
-	}
+  .status-bar {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .status-star {
+    width: 13px;
+    height: 13px;
+    flex-shrink: 0;
+    color: var(--melocoton-hondo);
+  }
+
+  .results-text {
+    font-family: var(--pixel);
+    font-size: 0.6875rem;
+    color: var(--tinta-suave);
+  }
+
+  .reset-btn {
+    background: var(--blanco);
+    border: 2px solid var(--tinta);
+    border-radius: var(--r-pildora);
+    box-shadow: 3px 3px 0 var(--rosa-hondo);
+    padding: 0.4375rem 0.875rem;
+    font-family: var(--cuerpo);
+    font-weight: 700;
+    font-size: 0.75rem;
+    color: var(--tinta);
+    cursor: pointer;
+    transition: transform 0.15s ease;
+  }
+
+  .reset-btn:hover {
+    transform: translate(-1px, -1px);
+  }
+
+  /* ── Móvil ─────────────────────────────────────────────── */
+  @media (max-width: 640px) {
+    .cmd-panel {
+      margin-bottom: 2.25rem;
+    }
+
+    .search-line {
+      padding: 0.8125rem 1.125rem;
+    }
+
+    .filter-row {
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+  }
 </style>
 
 <script>
-	// Obtener referencias a elementos
-	const searchInput = document.getElementById('search-input') as HTMLInputElement;
-	const clearSearchBtn = document.getElementById('clear-search') as HTMLButtonElement;
-	const filtersToggle = document.getElementById('filters-toggle') as HTMLButtonElement;
-	const filtersPanel = document.getElementById('filters-panel') as HTMLDivElement;
-	const filterCategory = document.getElementById('filter-category') as HTMLSelectElement;
-	const filterDifficulty = document.getElementById('filter-difficulty') as HTMLSelectElement;
-	const filterTime = document.getElementById('filter-time') as HTMLSelectElement;
-	const clearFiltersBtn = document.getElementById('clear-filters') as HTMLButtonElement;
-	const resultsCount = document.getElementById('results-count') as HTMLDivElement;
-	const activeTagIndicator = document.getElementById('active-tag-indicator') as HTMLDivElement;
-	const activeTagText = document.getElementById('active-tag-text') as HTMLSpanElement;
-	const clearActiveTagBtn = document.getElementById('clear-active-tag') as HTMLButtonElement;
-	const recipeCards = document.querySelectorAll('.recipe-card') as NodeListOf<HTMLElement>;
+  // ── State ──────────────────────────────────────────────────────────────────
+  let activeTag: string | null = null;
+  let selectedCategory  = '';
+  let selectedDifficulty = '';
+  let selectedTime       = '';
+  let pagefindSlugs: Set<string> | null = null;
+  let pagefindInstance: any = null;
+  let searchFallback = '';
 
-	// Estado del tag activo
-	let activeTag: string | null = null;
+  // ── DOM refs ───────────────────────────────────────────────────────────────
+  const searchInput      = document.getElementById('search-input')      as HTMLInputElement;
+  const clearSearchBtn   = document.getElementById('clear-search')      as HTMLButtonElement;
+  const clearFiltersBtn  = document.getElementById('clear-filters')     as HTMLButtonElement;
+  const resultsCount     = document.getElementById('results-count')     as HTMLElement;
+  const tagRow           = document.getElementById('tag-row')           as HTMLElement;
+  const activeTagText    = document.getElementById('active-tag-text')   as HTMLElement;
+  const clearTagBtn      = document.getElementById('clear-active-tag')  as HTMLButtonElement;
+  const filtersToggle    = document.getElementById('filters-toggle')    as HTMLButtonElement;
+  const filtersCollapse  = document.getElementById('filters-collapse')  as HTMLElement;
+  const recipeCards      = document.querySelectorAll('.recipe-card')    as NodeListOf<HTMLElement>;
 
-	// Poblar opciones de categoría dinámicamente
-	const categories = new Set<string>();
-	recipeCards.forEach(card => {
-		const category = card.querySelector('.category')?.textContent?.trim();
-		if (category) categories.add(category);
-	});
-	categories.forEach(category => {
-		const option = document.createElement('option');
-		option.value = category;
-		option.textContent = category;
-		filterCategory.appendChild(option);
-	});
+  // ── Collapse toggle ────────────────────────────────────────────────────────
+  function setFiltersOpen(open: boolean) {
+    filtersCollapse.classList.toggle('open', open);
+    filtersToggle.setAttribute('aria-expanded', String(open));
+  }
 
-	// Actualizar apariencia de tags en las tarjetas
-	function updateTagsAppearance() {
-		recipeCards.forEach(card => {
-			const tagButtons = card.querySelectorAll('.tag-clickable');
-			tagButtons.forEach(tagBtn => {
-				const tagText = (tagBtn as HTMLElement).dataset.tag;
-				if (tagText === activeTag) {
-					tagBtn.classList.add('active');
-				} else {
-					tagBtn.classList.remove('active');
-				}
-			});
-		});
+  filtersToggle.addEventListener('click', () => {
+    setFiltersOpen(filtersToggle.getAttribute('aria-expanded') !== 'true');
+  });
 
-		if (activeTag) {
-			activeTagText.textContent = activeTag;
-			activeTagIndicator.style.display = 'flex';
-		} else {
-			activeTagIndicator.style.display = 'none';
-		}
-	}
+  // ── Populate category pills dynamically ───────────────────────────────────
+  const categoryPills = document.getElementById('pills-category') as HTMLElement;
+  const categories = new Set<string>();
+  recipeCards.forEach(card => {
+    const cat = card.querySelector('.category')?.textContent?.trim();
+    if (cat) categories.add(cat);
+  });
+  categories.forEach(cat => {
+    const btn = document.createElement('button');
+    btn.className = 'pill';
+    btn.dataset.filter = 'category';
+    btn.dataset.value  = cat;
+    btn.textContent    = cat.toLowerCase();
+    categoryPills.appendChild(btn);
+  });
 
-	// Seleccionar/deseleccionar tag
-	function setActiveTag(tag: string | null) {
-		if (activeTag === tag) {
-			activeTag = null;
-		} else {
-			activeTag = tag;
-		}
-		updateTagsAppearance();
-		filterRecipes();
-	}
+  // ── Pagefind ───────────────────────────────────────────────────────────────
+  async function getPagefind() {
+    if (!pagefindInstance) {
+      const pf = await import(`${import.meta.env.BASE_URL}/pagefind/pagefind.js`);
+      await pf.init();
+      pagefindInstance = pf;
+    }
+    return pagefindInstance;
+  }
 
-	// Botón para limpiar tag activo
-	clearActiveTagBtn?.addEventListener('click', () => {
-		activeTag = null;
-		updateTagsAppearance();
-		filterRecipes();
-	});
+  async function searchWithPagefind(query: string) {
+    const term = query.trim();
+    if (!term) {
+      pagefindSlugs = null;
+      searchFallback = '';
+      filterRecipes();
+      return;
+    }
+    try {
+      const pf = await getPagefind();
+      const search = await pf.search(term);
+      const slugs = new Set<string>();
+      for (const result of search.results) {
+        const data = await result.data();
+        const match = data.url.match(/\/recipes\/([^/]+)\/?$/);
+        if (match) slugs.add(match[1]);
+      }
+      pagefindSlugs = slugs;
+      searchFallback = '';
+    } catch {
+      pagefindSlugs = null;
+      searchFallback = term.toLowerCase();
+    }
+    filterRecipes();
+  }
 
-	// Toggle de panel de filtros (mobile)
-	filtersToggle?.addEventListener('click', () => {
-		filtersToggle.classList.toggle('active');
-		filtersPanel.classList.toggle('open');
-	});
+  // ── Time parser ────────────────────────────────────────────────────────────
+  function parseTime(t: string): number {
+    // "26 h" y "2 h 30 min" se leían como 26 y 2 minutos porque solo
+    // se contemplaba la palabra "hora" y el primer número del texto.
+    const horas = t.match(/(\d+(?:[.,]\d+)?)\s*(?:h\b|horas?\b)/i);
+    const mins  = t.match(/(\d+)\s*(?:min\b|minutos?\b)/i);
 
-	// Función para parsear tiempo en minutos
-	function parseTime(timeString: string): number {
-		const match = timeString.match(/(\d+)/);
-		if (!match) return 999;
-		const value = parseInt(match[1]);
-		if (timeString.includes('hora')) {
-			return value * 60;
-		}
-		return value;
-	}
+    if (!horas && !mins) {
+      const n = t.match(/(\d+)/);
+      return n ? parseInt(n[1]) : 999;
+    }
 
-	// Función de filtrado
-	function filterRecipes() {
-		const searchTerm = searchInput.value.toLowerCase().trim();
-		const selectedCategory = filterCategory.value;
-		const selectedDifficulty = filterDifficulty.value;
-		const maxTime = filterTime.value ? parseInt(filterTime.value) : null;
+    const h = horas ? parseFloat(horas[1].replace(',', '.')) : 0;
+    const m = mins ? parseInt(mins[1]) : 0;
+    return h * 60 + m;
+  }
 
-		let visibleCount = 0;
+  // ── Core filter ────────────────────────────────────────────────────────────
+  function filterRecipes() {
+    const maxTime = selectedTime ? parseInt(selectedTime) : null;
+    let visible = 0;
 
-		recipeCards.forEach(card => {
-			const title = card.querySelector('h2')?.textContent?.toLowerCase() || '';
-			const category = card.querySelector('.category')?.textContent?.trim() || '';
-			const difficulty = card.querySelector('.card-meta .meta-item:nth-child(2)')?.textContent?.trim() || '';
-			const timeText = card.querySelector('.card-meta .meta-item:first-child')?.textContent?.trim() || '';
-			const cardTags = Array.from(card.querySelectorAll('.tag')).map(tag => tag.textContent?.trim() || '');
+    recipeCards.forEach(card => {
+      const slug       = (card as HTMLElement).dataset.slug ?? '';
+      const title      = card.querySelector('h2')?.textContent?.toLowerCase() ?? '';
+      const category   = card.querySelector('.category')?.textContent?.trim() ?? '';
+      const difficulty = card.querySelector('.card-meta .meta-item:nth-child(2)')?.textContent?.trim() ?? '';
+      const timeText   = card.querySelector('.card-meta .meta-item:first-child')?.textContent?.trim() ?? '';
+      const cardTags   = Array.from(card.querySelectorAll('.tag')).map(t => t.textContent?.trim() ?? '');
 
-			const matchesSearch = !searchTerm ||
-				title.includes(searchTerm) ||
-				cardTags.some(tag => tag.toLowerCase().includes(searchTerm));
+      const matchesSearch = pagefindSlugs
+        ? pagefindSlugs.has(slug)
+        : !searchFallback || title.includes(searchFallback) || cardTags.some(t => t.toLowerCase().includes(searchFallback));
 
-			const matchesCategory = !selectedCategory || category === selectedCategory;
-			const matchesDifficulty = !selectedDifficulty || difficulty.includes(selectedDifficulty);
+      const ok =
+        matchesSearch &&
+        (!selectedCategory   || category === selectedCategory) &&
+        (!selectedDifficulty || difficulty.includes(selectedDifficulty)) &&
+        (!maxTime            || parseTime(timeText) <= maxTime) &&
+        (!activeTag          || cardTags.includes(activeTag));
 
-			const recipeTime = parseTime(timeText);
-			const matchesTime = !maxTime || recipeTime <= maxTime;
+      const wrapper = (card as HTMLElement).parentElement;
+      (wrapper ?? (card as HTMLElement)).style.display = ok ? '' : 'none';
+      if (ok) visible++;
+    });
 
-			const matchesTag = !activeTag || cardTags.includes(activeTag);
+    updateStatus(visible);
+  }
 
-			if (matchesSearch && matchesCategory && matchesDifficulty && matchesTime && matchesTag) {
-				card.style.display = 'block';
-				visibleCount++;
-			} else {
-				card.style.display = 'none';
-			}
-		});
+  function updateStatus(count: number) {
+    const total = recipeCards.length;
+    resultsCount.textContent = count === total
+      ? `${count} recetas`
+      : `${count} de ${total} recetas`;
 
-		updateResultsCount(visibleCount);
-		clearSearchBtn.style.display = searchTerm ? 'flex' : 'none';
-	}
+    const anyFilter = selectedCategory || selectedDifficulty || selectedTime
+                    || activeTag || searchInput.value.trim();
+    clearFiltersBtn.style.display  = anyFilter ? 'inline-block' : 'none';
+    clearSearchBtn.style.display   = searchInput.value.trim() ? 'flex' : 'none';
+  }
 
-	// Actualizar contador de resultados
-	function updateResultsCount(count: number) {
-		if (count === recipeCards.length) {
-			resultsCount.textContent = `${count} recetas`;
-		} else {
-			resultsCount.textContent = `${count} de ${recipeCards.length} recetas`;
-		}
-	}
+  // ── Pills ──────────────────────────────────────────────────────────────────
+  document.querySelectorAll('.pill').forEach(pill => {
+    pill.addEventListener('click', () => {
+      const btn  = pill as HTMLButtonElement;
+      const type = btn.dataset.filter!;
+      const val  = btn.dataset.value!;
 
-	// Event listeners para filtros
-	searchInput?.addEventListener('input', filterRecipes);
-	filterCategory?.addEventListener('change', filterRecipes);
-	filterDifficulty?.addEventListener('change', filterRecipes);
-	filterTime?.addEventListener('change', filterRecipes);
+      if (type === 'category')   selectedCategory   = val;
+      if (type === 'difficulty') selectedDifficulty = val;
+      if (type === 'time')       selectedTime       = val;
 
-	// Limpiar búsqueda
-	clearSearchBtn?.addEventListener('click', () => {
-		searchInput.value = '';
-		filterRecipes();
-	});
+      document.querySelectorAll(`.pill[data-filter="${type}"]`)
+        .forEach(p => p.classList.remove('active'));
+      btn.classList.add('active');
 
-	// Limpiar todos los filtros
-	clearFiltersBtn?.addEventListener('click', () => {
-		searchInput.value = '';
-		filterCategory.value = '';
-		filterDifficulty.value = '';
-		filterTime.value = '';
-		activeTag = null;
-		updateTagsAppearance();
-		filterRecipes();
-	});
+      filterRecipes();
+    });
+  });
 
-	// Inicializar contador
-	updateResultsCount(recipeCards.length);
+  // ── Tag display ────────────────────────────────────────────────────────────
+  function setTagDisplay() {
+    recipeCards.forEach(card => {
+      card.querySelectorAll('.tag-clickable').forEach(el => {
+        (el as HTMLElement).classList.toggle('active', (el as HTMLElement).dataset.tag === activeTag);
+      });
+    });
+    if (activeTag) {
+      activeTagText.textContent = activeTag;
+      tagRow.style.display = 'flex';
+    } else {
+      tagRow.style.display = 'none';
+    }
+  }
 
-	// En desktop, mostrar filtros siempre
-	function checkScreenSize() {
-		if (window.innerWidth >= 640) {
-			filtersPanel.classList.add('desktop-visible');
-		} else {
-			filtersPanel.classList.remove('desktop-visible');
-		}
-	}
+  function setActiveTag(tag: string | null) {
+    activeTag = activeTag === tag ? null : tag;
+    setTagDisplay();
+    filterRecipes();
+  }
 
-	checkScreenSize();
-	window.addEventListener('resize', checkScreenSize);
+  clearTagBtn.addEventListener('click', () => {
+    activeTag = null;
+    setTagDisplay();
+    filterRecipes();
+  });
 
-	// Escuchar evento de selección de tag desde tarjetas
-	window.addEventListener('selectTag', ((e: CustomEvent) => {
-		const tag = e.detail?.tag;
-		if (tag) {
-			setActiveTag(tag);
+  // ── Search ─────────────────────────────────────────────────────────────────
+  searchInput.addEventListener('input', () => searchWithPagefind(searchInput.value));
 
-			if (window.innerWidth < 640 && !filtersPanel.classList.contains('open')) {
-				filtersToggle.click();
-			}
-		}
-	}) as EventListener);
+  clearSearchBtn.addEventListener('click', () => {
+    searchInput.value = '';
+    pagefindSlugs = null;
+    searchFallback = '';
+    filterRecipes();
+  });
+
+  // ── Reset all ──────────────────────────────────────────────────────────────
+  clearFiltersBtn.addEventListener('click', () => {
+    searchInput.value  = '';
+    pagefindSlugs      = null;
+    searchFallback     = '';
+    selectedCategory   = '';
+    selectedDifficulty = '';
+    selectedTime       = '';
+    activeTag          = null;
+
+    document.querySelectorAll('.pill').forEach(p => {
+      (p as HTMLButtonElement).classList.toggle('active',
+        (p as HTMLButtonElement).dataset.value === '');
+    });
+
+    setTagDisplay();
+    filterRecipes();
+  });
+
+  // ── Tag events from cards ──────────────────────────────────────────────────
+  window.addEventListener('selectTag', ((e: CustomEvent) => {
+    setActiveTag(e.detail?.tag ?? null);
+  }) as EventListener);
+
+  // ── URL param ?tag= ────────────────────────────────────────────────────────
+  const tagFromUrl = new URLSearchParams(window.location.search).get('tag');
+  if (tagFromUrl) {
+    activeTag = tagFromUrl;
+    setTagDisplay();
+    window.history.replaceState({}, '', window.location.pathname);
+  }
+
+  // ── Initial render ─────────────────────────────────────────────────────────
+  filterRecipes();
 </script>
