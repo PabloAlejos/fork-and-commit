@@ -27,6 +27,11 @@ jobs:
       
       - name: Build
         run: bun run build
+        env:
+          # La sección /admin llama a esta API desde el navegador. Se inyecta
+          # en tiempo de build, así que tiene que estar aquí: el .env local no
+          # llega a CI. No es un secreto, es una dirección.
+          PUBLIC_API_URL: https://recipes-api.pabloalejos.dev
       
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
