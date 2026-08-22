@@ -1,11 +1,9 @@
 ---
 interface Props {
 	title?: string;
-	/** Excluye la página de los buscadores. Para la sección de administración. */
-	noindex?: boolean;
 }
 
-const { title = 'Fork & Commit', noindex = false } = Astro.props;
+const { title = 'Fork & Commit' } = Astro.props;
 
 // BASE_URL llega sin barra final ('/fork-and-commit'), así que hay que
 // normalizarla antes de concatenar o salen rutas como
@@ -25,7 +23,14 @@ const base = import.meta.env.BASE_URL.replace(/\/?$/, '/');
 		<meta name="generator" content={Astro.generator} />
 		<meta name="description" content="Fork & Commit — Colección personal de recetas donde el código se encuentra con la cocina." />
 		<meta name="theme-color" content="#F9F3E3" />
-		{noindex && <meta name="robots" content="noindex, nofollow" />}
+
+		<!-- Recetario personal: no hay ningún interés en salir en buscadores.
+		     Se hace con la meta y no con un robots.txt porque robots.txt solo
+		     se lee en la raíz del dominio (aquí sería pabloalejos.github.io,
+		     no /fork-and-commit/), y porque Disallow impide rastrear pero no
+		     indexar: el buscador no llegaría a leer este noindex.
+		     Para permitir la indexación algún día, basta con quitar esta línea. -->
+		<meta name="robots" content="noindex, nofollow" />
 
 		<!-- Acceso directo en la pantalla de inicio de iOS -->
 		<meta name="apple-mobile-web-app-capable" content="yes" />
