@@ -108,6 +108,19 @@ Bloquea absolutamente todo lo demás.
 > `schema_version` durante la transición. Preferible evitarla — es código que
 > nace para borrarse.
 
+> **Trampa del caché de Astro.** El content store (`.astro/`) guarda las
+> recetas ya parseadas y solo las revalida cuando cambia el fichero de la
+> receta o **`src/content/config.ts`**. Como la forma vive en
+> `recipe-schema.ts`, tocarla no invalida nada: `astro dev` sigue sirviendo
+> datos parseados con el schema viejo, y aparecen campos `undefined` que en
+> `astro build` funcionan. Reiniciar dev no basta.
+>
+> Si tocas el schema y el resultado no cuadra: `rm -rf .astro`.
+>
+> Es el precio de tener el schema fuera de Astro, y compensa: `npm run validar`
+> comprueba una receta en un segundo, sin build. Pero conviene saberlo antes de
+> perder media hora persiguiendo un fantasma.
+
 ---
 
 ## 2. Back
