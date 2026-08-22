@@ -1,0 +1,465 @@
+---
+/**
+ * Zona de subida de imágenes.
+ *
+ * Nace para el panel de generación (la foto de la que Claude saca la receta) y
+ * está pensada para el de edición (la foto que acompaña a la receta ya
+ * escrita), así que todo lo que cambia entre un sitio y otro son props.
+ *
+ * El <input type="file"> de verdad sigue estando: oculto pero enfocable. Es
+ * quien guarda el fichero, quien abre el selector al pulsar la etiqueta y
+ * quien se vacía con form.reset(). Lo demás es pintura por encima, así que
+ * quien lea el valor desde fuera lo sigue haciendo igual que antes.
+ */
+interface Props {
+	/** id del input. Los ids internos del componente cuelgan de este. */
+	id: string;
+	name?: string;
+	titulo?: string;
+	ayuda?: string;
+	/** Pastel del bloque: le da identidad propia según dónde se use. */
+	pastel?: 'rosa' | 'melocoton' | 'mantequilla' | 'menta' | 'cielo' | 'lavanda';
+	accept?: string;
+	/** Tope en bytes. El de verdad lo pone el backend; esto avisa antes. */
+	maxBytes?: number;
+	/** Foto que la receta ya tiene: pinta la ficha desde el primer render. */
+	preview?: string;
+	previewNombre?: string;
+	hidden?: boolean;
+}
+
+const {
+	id,
+	name,
+	titulo = 'Arrastra una foto',
+	ayuda = 'o pulsa para elegir un fichero',
+	pastel = 'melocoton',
+	accept = 'image/jpeg,image/png,image/gif,image/webp',
+	maxBytes = 5 * 1024 * 1024,
+	preview,
+	previewNombre,
+	hidden = false,
+} = Astro.props;
+
+// 'image/jpeg' -> 'JPG'. El accept manda: si mañana admite uno más, la línea
+// de formatos se entera sola.
+const NOMBRES: Record<string, string> = { jpeg: 'JPG', 'svg+xml': 'SVG' };
+
+const formatos = [
+	...new Set(
+		accept
+			.split(',')
+			.map((tipo) => tipo.trim().split('/')[1])
+			.filter(Boolean)
+			.map((ext) => NOMBRES[ext] ?? ext.toUpperCase()),
+	),
+].join(' · ');
+
+const tope = `${Math.round((maxBytes / (1024 * 1024)) * 10) / 10} MB`;
+---
+
+<div
+	class="subida"
+	id={`${id}-campo`}
+	data-subida
+	data-max={maxBytes}
+	hidden={hidden}
+	style={`--pastel: var(--${pastel}); --hondo: var(--${pastel}-hondo); --ink: var(--${pastel}-ink);`}
+>
+	<input class="fichero" type="file" id={id} name={name} accept={accept} data-fichero />
+
+	<!-- Vacío -->
+	<label class="zona" for={id} data-zona hidden={Boolean(preview)}>
+		<span class="icono">
+			<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+				<rect x="3" y="5" width="18" height="14" rx="3.5"/>
+				<circle cx="8.6" cy="10.1" r="1.5"/>
+				<path d="M3.4 16.6l4.2-3.6a2 2 0 0 1 2.6 0l3.3 2.9"/>
+				<path d="M13.9 14.1l1.9-1.6a2 2 0 0 1 2.6 0l2.2 1.9"/>
+			</svg>
+		</span>
+
+		<span class="textos">
+			<span class="titulo">{titulo}</span>
+			<span class="ayuda">{ayuda}</span>
+		</span>
+
+		<span class="formatos">{formatos} · máx {tope}</span>
+	</label>
+
+	<!-- Con fichero -->
+	<div class="ficha" data-ficha hidden={!preview}>
+		<img class="miniatura" data-miniatura src={preview} alt="" />
+
+		<span class="datos">
+			<span class="nombre" data-nombre>{previewNombre}</span>
+			<span class="peso" data-peso>foto actual</span>
+		</span>
+
+		<span class="acciones">
+			<label class="mini" for={id}>cambiar</label>
+			<button type="button" class="mini mini-quitar" data-quitar>
+				<svg viewBox="0 0 10 10" fill="none" aria-hidden="true">
+					<path d="M1 1l8 8M9 1L1 9" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+				</svg>
+				quitar
+			</button>
+		</span>
+	</div>
+
+	<p class="fallo" data-fallo hidden></p>
+</div>
+
+<style>
+	/* .zona y .ficha fijan display, que machaca el display:none de [hidden]. */
+	[hidden] { display: none !important; }
+
+	.subida { position: relative; }
+
+	/* El input real: invisible pero enfocable y anunciable. display:none lo
+	   sacaría del orden de tabulación y del formulario. */
+	.fichero {
+		position: absolute;
+		width: 1px;
+		height: 1px;
+		padding: 0;
+		margin: -1px;
+		border: 0;
+		overflow: hidden;
+		clip-path: inset(50%);
+		white-space: nowrap;
+	}
+
+	/* El foco del teclado va al input, pero el anillo se pinta en la caja que
+	   se ve. Son hermanos, así que basta el combinador. */
+	.fichero:focus-visible ~ .zona,
+	.fichero:focus-visible ~ .ficha {
+		outline: 3px solid var(--tinta);
+		outline-offset: 3px;
+	}
+
+	/* ── Vacío ─────────────────────────────────────────────── */
+	.zona {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		justify-content: center;
+		gap: 0.75rem;
+		min-height: 11.5rem;
+		background: var(--crema);
+		border: 3px dashed var(--hondo);
+		border-radius: var(--r-panel);
+		padding: 1.75rem 1.25rem;
+		text-align: center;
+		cursor: pointer;
+		transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease,
+			border-color 0.15s ease;
+	}
+
+	.zona:hover {
+		background: var(--blanco);
+		border-color: var(--tinta);
+		transform: translate(-2px, -2px);
+		box-shadow: 6px 6px 0 var(--hondo);
+	}
+
+	.icono {
+		display: grid;
+		place-items: center;
+		width: 3.25rem;
+		height: 3.25rem;
+		background: var(--pastel);
+		border: var(--borde);
+		border-radius: var(--r-caja);
+		box-shadow: 3px 3px 0 var(--hondo);
+		color: var(--ink);
+		transform: rotate(-3deg);
+		transition: transform 0.15s ease;
+	}
+
+	.zona:hover .icono { transform: rotate(3deg) scale(1.04); }
+
+	.icono svg { width: 26px; height: 26px; }
+
+	.textos { display: flex; flex-direction: column; gap: 0.1875rem; }
+
+	.titulo {
+		font-family: var(--display);
+		font-weight: 800;
+		font-size: 1.125rem;
+		letter-spacing: -0.02em;
+		line-height: 1.2;
+		color: var(--tinta);
+	}
+
+	.ayuda {
+		font-weight: 600;
+		font-size: 0.875rem;
+		line-height: 1.45;
+		color: var(--tinta-suave);
+	}
+
+	.formatos {
+		font-family: var(--pixel);
+		font-size: 0.5938rem;
+		letter-spacing: 0.04em;
+		line-height: 1.7;
+		color: var(--tinta-suave);
+	}
+
+	/* ── Arrastrando por encima ────────────────────────────── */
+	.subida.encima .zona {
+		background: var(--pastel);
+		border-style: solid;
+		border-color: var(--tinta);
+		transform: translate(-3px, -3px);
+		box-shadow: 8px 8px 0 var(--hondo);
+	}
+
+	.subida.encima .icono {
+		transform: rotate(-8deg) scale(1.1);
+		background: var(--blanco);
+	}
+
+	.subida.encima .titulo { color: var(--ink); }
+	.subida.encima .ayuda,
+	.subida.encima .formatos { color: var(--ink); }
+
+	/* ── Con fichero ───────────────────────────────────────── */
+	.ficha {
+		display: flex;
+		align-items: center;
+		gap: 0.9375rem;
+		background: var(--pastel);
+		border: var(--borde);
+		border-radius: var(--r-panel);
+		box-shadow: 6px 6px 0 var(--hondo);
+		padding: 0.875rem 1rem;
+	}
+
+	.miniatura {
+		width: 4.25rem;
+		height: 4.25rem;
+		flex-shrink: 0;
+		object-fit: cover;
+		background: var(--blanco);
+		border: var(--borde-fino);
+		border-radius: var(--r-caja);
+	}
+
+	.datos {
+		display: flex;
+		flex-direction: column;
+		gap: 0.1875rem;
+		min-width: 0;
+		flex: 1;
+	}
+
+	.nombre {
+		font-family: var(--display);
+		font-weight: 800;
+		font-size: 0.9688rem;
+		letter-spacing: -0.02em;
+		line-height: 1.25;
+		color: var(--tinta);
+		/* Los nombres de fichero son largos y no parten por espacios. */
+		overflow-wrap: anywhere;
+	}
+
+	.peso {
+		font-family: var(--pixel);
+		font-size: 0.5938rem;
+		letter-spacing: 0.04em;
+		line-height: 1.6;
+		color: var(--ink);
+	}
+
+	.acciones {
+		display: flex;
+		flex-direction: column;
+		gap: 0.4375rem;
+		flex-shrink: 0;
+	}
+
+	.mini {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		gap: 0.375rem;
+		background: var(--blanco);
+		border: var(--borde-fino);
+		border-radius: var(--r-pildora);
+		padding: 0.375rem 0.8125rem;
+		font-family: var(--cuerpo);
+		font-weight: 700;
+		font-size: 0.75rem;
+		color: var(--tinta);
+		cursor: pointer;
+		transition: transform 0.15s ease, box-shadow 0.15s ease;
+	}
+
+	.mini:hover {
+		transform: translate(-1px, -1px);
+		box-shadow: 3px 3px 0 var(--hondo);
+	}
+
+	.mini-quitar svg { width: 9px; height: 9px; }
+
+	/* ── Fallo ─────────────────────────────────────────────── */
+	.fallo {
+		background: var(--rosa);
+		color: var(--rosa-ink);
+		border: var(--borde-fino);
+		border-radius: var(--r-caja);
+		padding: 0.75rem 1rem;
+		margin-top: 0.75rem;
+		font-weight: 600;
+		font-size: 0.8125rem;
+		line-height: 1.5;
+	}
+
+	@media (max-width: 30rem) {
+		.ficha { flex-wrap: wrap; }
+		.acciones { flex-direction: row; width: 100%; }
+		.mini { flex: 1; }
+	}
+</style>
+
+<script>
+	const NUMERO = new Intl.NumberFormat('es-ES', { maximumFractionDigits: 1 });
+
+	function peso(bytes: number) {
+		if (bytes < 1024) return `${bytes} B`;
+		if (bytes < 1024 * 1024) return `${NUMERO.format(bytes / 1024)} kB`;
+		return `${NUMERO.format(bytes / (1024 * 1024))} MB`;
+	}
+
+	function iniciar(campo: HTMLElement) {
+		const q = <T extends HTMLElement>(sel: string) => campo.querySelector(sel) as T;
+
+		const input     = q<HTMLInputElement>('[data-fichero]');
+		const zona      = q('[data-zona]');
+		const ficha     = q('[data-ficha]');
+		const miniatura = q<HTMLImageElement>('[data-miniatura]');
+		const nombre    = q('[data-nombre]');
+		const tamano    = q('[data-peso]');
+		const fallo     = q('[data-fallo]');
+
+		const maximo = Number(campo.dataset.max ?? 0);
+		const permitidos = (input.accept || '')
+			.split(',')
+			.map((t) => t.trim())
+			.filter(Boolean);
+
+		// La miniatura vive en memoria hasta que se revoca. Sin esto, cambiar
+		// de foto veinte veces deja veinte blobs retenidos.
+		let objectUrl = '';
+
+		function avisar(texto: string) {
+			fallo.textContent = texto;
+			fallo.hidden = !texto;
+		}
+
+		function soltarUrl() {
+			if (objectUrl) URL.revokeObjectURL(objectUrl);
+			objectUrl = '';
+		}
+
+		function vaciar() {
+			input.value = '';
+			soltarUrl();
+			miniatura.removeAttribute('src');
+			ficha.hidden = true;
+			zona.hidden = false;
+		}
+
+		function pintar(file: File) {
+			soltarUrl();
+			objectUrl = URL.createObjectURL(file);
+			miniatura.src = objectUrl;
+			nombre.textContent = file.name;
+			tamano.textContent = `${peso(file.size)} · ${file.type.split('/')[1]?.toUpperCase() ?? ''}`;
+			zona.hidden = true;
+			ficha.hidden = false;
+		}
+
+		/** Rechazar vacía el input: así no se manda nunca lo que ya se dijo que no vale. */
+		function aceptar(file: File | undefined) {
+			if (!file) return;
+
+			if (permitidos.length && !permitidos.includes(file.type)) {
+				vaciar();
+				avisar(`Ese fichero no es una imagen de las que valen. Solo ${permitidos
+					.map((t) => t.split('/')[1].toUpperCase())
+					.join(', ')}.`);
+				return;
+			}
+
+			if (maximo && file.size > maximo) {
+				vaciar();
+				avisar(`La foto pesa ${peso(file.size)} y el tope son ${peso(maximo)}. Prueba con una más pequeña.`);
+				return;
+			}
+
+			avisar('');
+			pintar(file);
+		}
+
+		input.addEventListener('change', () => aceptar(input.files?.[0]));
+
+		q<HTMLButtonElement>('[data-quitar]').addEventListener('click', () => {
+			vaciar();
+			avisar('');
+			input.focus();
+		});
+
+		// ── Arrastrar y soltar ──────────────────────────────────────────
+		// dragenter y dragleave saltan también al cruzar los hijos, así que se
+		// cuentan las entradas en vez de fiarse de un solo dragleave.
+		let dentro = 0;
+
+		const encender = () => campo.classList.add('encima');
+		const apagar = () => {
+			dentro = 0;
+			campo.classList.remove('encima');
+		};
+
+		campo.addEventListener('dragenter', (e) => {
+			e.preventDefault();
+			dentro++;
+			encender();
+		});
+
+		campo.addEventListener('dragover', (e) => {
+			e.preventDefault();
+			if (e.dataTransfer) e.dataTransfer.dropEffect = 'copy';
+		});
+
+		campo.addEventListener('dragleave', () => {
+			if (--dentro <= 0) apagar();
+		});
+
+		campo.addEventListener('drop', (e) => {
+			e.preventDefault();
+			apagar();
+
+			const file = e.dataTransfer?.files?.[0];
+			if (!file) return;
+
+			// Soltar no toca el input: hay que metérselo a mano para que el
+			// fichero viaje en el formulario como si se hubiera elegido.
+			const datos = new DataTransfer();
+			datos.items.add(file);
+			input.files = datos.files;
+
+			aceptar(file);
+		});
+
+		// form.reset() limpia el input pero no dispara 'change', así que la
+		// ficha se quedaría pintada con una foto que ya no está. El valor se
+		// borra después del evento: de ahí el aplazamiento.
+		input.form?.addEventListener('reset', () => setTimeout(vaciar));
+	}
+
+	document.querySelectorAll<HTMLElement>('[data-subida]').forEach(iniciar);
+</script>

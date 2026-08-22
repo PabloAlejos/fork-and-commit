@@ -1,5 +1,6 @@
 ---
 import Layout from '../layouts/Layout.astro';
+import ImageUpload from '../components/ImageUpload.astro';
 
 // Se inyecta en el cliente en tiempo de build. No es un secreto: es una
 // dirección. La clave la escribe el usuario y vive en su navegador.
@@ -104,7 +105,13 @@ const CATEGORIAS = [
 					<form id="form-generar">
 						<textarea id="in-text" rows="9" placeholder="Pega aquí la receta: un mensaje, unas notas, lo que sea."></textarea>
 						<input type="url" id="in-url" placeholder="https://ejemplo.com/curry-japones" hidden />
-						<input type="file" id="in-image" accept="image/jpeg,image/png,image/gif,image/webp" hidden />
+						<ImageUpload
+							id="in-image"
+							titulo="Arrastra la foto de la receta"
+							ayuda="una página de un libro, una captura, una nota a mano"
+							pastel="melocoton"
+							hidden
+						/>
 						<input type="text" id="in-notes" placeholder="Indicaciones extra (opcional): «para 2 personas», «sin gluten»…" />
 						<button type="submit" id="btn-generar" class="btn btn-primario btn-ancho">Generar borrador</button>
 					</form>
@@ -1141,7 +1148,7 @@ const CATEGORIAS = [
 			modo = (tab.dataset.modo ?? 'text') as typeof modo;
 			$('in-text').hidden = modo !== 'text';
 			$('in-url').hidden = modo !== 'url';
-			$('in-image').hidden = modo !== 'image';
+			$('in-image-campo').hidden = modo !== 'image';
 			avisar(estadoGenerar, '');
 		});
 	});
