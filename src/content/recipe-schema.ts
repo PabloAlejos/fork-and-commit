@@ -104,6 +104,19 @@ export const camposReceta = {
   total_time: z.number().int().positive(),
   active_time: z.number().int().positive(),
 
+  /**
+   * Lo que hay que comprar, y **no** se deriva de `ingredients`.
+   *
+   * Es una lista corta y con criterio: en el salteado son cinco cosas —pollo,
+   * garbanzos, pimiento, cherry, Tajín— y deja fuera la sal, el aceite, el ajo
+   * y las especias, que ya están en el armario. Derivarla la convierte otra vez
+   * en la lista de ingredientes, que es exactamente lo que no es.
+   *
+   * Nombres genéricos de la compra («pimiento», «tomate cherry»), no el nombre
+   * completo del ingrediente ni cantidades.
+   */
+  shopping_list: z.array(z.string()).default([]),
+
   utensils: z.array(z.string()).default([]),
   ingredients: z.array(grupoIngredientes).min(1),
   /** El orden del array **es** el orden de ejecución. */

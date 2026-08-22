@@ -35,10 +35,11 @@ const fecha = new Intl.DateTimeFormat('es-ES', {
   year: 'numeric',
 }).format(receta.date);
 
-// Antes era un campo propio (`shopping_list`) que había que mantener a mano en
-// paralelo a los ingredientes. Ahora se deriva: si está en la receta, hay que
-// comprarlo.
-const compra = receta.ingredients.flatMap(grupo => grupo.items.map(textoIngrediente));
+// Sigue siendo un campo propio y no se deriva de `ingredients`. Derivarla la
+// convierte en la lista de ingredientes otra vez, que es justo lo que no es:
+// aquí van las cosas que hay que comprar, sin la sal, el aceite ni las
+// especias que ya están en el armario. Eso es criterio, no un filtro.
+const compra = receta.shopping_list;
 
 const datos = [
   { etiqueta: 'Dificultad',    valor: receta.difficulty,                        pastel: 'rosa' },
@@ -47,14 +48,13 @@ const datos = [
   { etiqueta: 'Raciones',      valor: `${receta.servings} ${receta.servings === 1 ? 'persona' : 'personas'}`, pastel: 'menta' },
 ];
 
-// Las secciones del cuerpo, en el mismo orden que tenían en el markdown para
-// que el ciclo de color de los `h2` no se mueva.
-const secciones = [
-  { titulo: 'Reposo',            pasos: pasosDeTipo(receta.steps, 'rest') },
-  { titulo: 'Preparación previa', pasos: pasosDeTipo(receta.steps, 'prep') },
-  { titulo: 'Elaboración',       pasos: pasosDeTipo(receta.steps, 'cook') },
-  { titulo: 'Emplatado',         pasos: pasosDeTipo(receta.steps, 'plate') },
-].filter(seccion => seccion.pasos.length > 0);
+// Los reposos y la mise en place van juntos bajo «Preparación previa», y los
+// utensilios dentro, como estaban en el markdown. No es capricho: el color de
+// cada `h2` sale de su posición (`nth-of-type(3n+2)`), así que sacar los
+// utensilios o los reposos a sección propia repinta media receta.
+const previos = [...pasosDeTipo(receta.steps, 'rest'), ...pasosDeTipo(receta.steps, 'prep')];
+const elaboracion = pasosDeTipo(receta.steps, 'cook');
+const emplatado = pasosDeTipo(receta.steps, 'plate');
 
 const anio = new Date().getFullYear();
 ---
@@ -168,6 +168,11 @@ const anio = new Date().getFullYear();
         )}
 
         <article class="recipe-content">
+          {/* El h1 va oculto por CSS y repite el título, pero no sobra: es lo
+              que hace que el párrafo siguiente sea la entradilla destacada
+              (`.recipe-content h1 + p`). Sin él, la entradilla se pinta como
+              un párrafo cualquiera. */}
+          <h1>{receta.title}</h1>
           <p>{receta.description}</p>
 
           <h2>Ingredientes ({receta.servings} {receta.servings === 1 ? 'persona' : 'personas'})</h2>
@@ -181,26 +186,53 @@ const anio = new Date().getFullYear();
             </>
           ))}
 
-          {receta.utensils.length > 0 && (
+          {(receta.utensils.length > 0 || previos.length > 0) && (
             <>
-              <h2>Utensilios</h2>
-              <ul>
-                {receta.utensils.map(utensilio => <li>{utensilio}</li>)}
-              </ul>
-            </>
-          )}
+              <h2>Preparación previa</h2>
 
-          {secciones.map(seccion => (
-            <>
-              <h2>{seccion.titulo}</h2>
-              {seccion.pasos.map(paso => (
+              {receta.utensils.length > 0 && (
                 <>
-                  <h3>{paso.timer ? `${paso.title} — ${formatearDuracion(paso.timer)}` : paso.title}</h3>
+                  <h3>Utensilios necesarios</h3>
+                  <ul>
+                    {receta.utensils.map(utensilio => <li>{utensilio}</li>)}
+                  </ul>
+                </>
+              )}
+
+              {previos.map(paso => (
+                <>
+                  <h3>{paso.timer ? `${paso.title} (${formatearDuracion(paso.timer)})` : paso.title}</h3>
                   <Fragment set:html={contenidoAHtml(paso.content)} />
                 </>
               ))}
             </>
-          ))}
+          )}
+
+          {elaboracion.length > 0 && (
+            <>
+              <h2>Elaboración</h2>
+              {elaboracion.map(paso => (
+                <>
+                  <h3>{paso.timer ? `${paso.title} (${formatearDuracion(paso.timer)})` : paso.title}</h3>
+                  <Fragment set:html={contenidoAHtml(paso.content)} />
+                </>
+              ))}
+            </>
+          )}
+
+          {emplatado.length > 0 && (
+            <>
+              <h2>Emplatado</h2>
+              {emplatado.map(paso => (
+                <>
+                  {/* Con un solo paso de emplatado el título sobra: el h2 ya lo
+                      dice. Era así en el markdown y se lee mejor. */}
+                  {emplatado.length > 1 && <h3>{paso.title}</h3>}
+                  <Fragment set:html={contenidoAHtml(paso.content)} />
+                </>
+              ))}
+            </>
+          )}
 
           {receta.notes.length > 0 && (
             <>
