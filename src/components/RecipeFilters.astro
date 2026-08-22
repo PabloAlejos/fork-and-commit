@@ -479,23 +479,6 @@
     filterRecipes();
   }
 
-  // ── Time parser ────────────────────────────────────────────────────────────
-  function parseTime(t: string): number {
-    // "26 h" y "2 h 30 min" se leían como 26 y 2 minutos porque solo
-    // se contemplaba la palabra "hora" y el primer número del texto.
-    const horas = t.match(/(\d+(?:[.,]\d+)?)\s*(?:h\b|horas?\b)/i);
-    const mins  = t.match(/(\d+)\s*(?:min\b|minutos?\b)/i);
-
-    if (!horas && !mins) {
-      const n = t.match(/(\d+)/);
-      return n ? parseInt(n[1]) : 999;
-    }
-
-    const h = horas ? parseFloat(horas[1].replace(',', '.')) : 0;
-    const m = mins ? parseInt(mins[1]) : 0;
-    return h * 60 + m;
-  }
-
   // ── Core filter ────────────────────────────────────────────────────────────
   function filterRecipes() {
     const maxTime = selectedTime ? parseInt(selectedTime) : null;
@@ -506,7 +489,13 @@
       const title      = card.querySelector('h2')?.textContent?.toLowerCase() ?? '';
       const category   = card.querySelector('.category')?.textContent?.trim() ?? '';
       const difficulty = card.querySelector('.card-meta .meta-item:nth-child(2)')?.textContent?.trim() ?? '';
-      const timeText   = card.querySelector('.card-meta .meta-item:first-child')?.textContent?.trim() ?? '';
+      // El tiempo ya no se lee del texto de la tarjeta: viene en segundos en un
+      // data attribute. Se acabó el parser que intentaba entender «2 h 30 min».
+      //
+      // Y es `active_time`, no el total: quien filtra por «≤ 30 min» pregunta
+      // cuánto tiene que currar, no cuánto tarda en fermentar. Con el total, el
+      // kimchi y la masa de pizza no aparecerían nunca.
+      const activeTime = Number((card as HTMLElement).dataset.activeTime ?? Infinity);
       const cardTags   = Array.from(card.querySelectorAll('.tag')).map(t => t.textContent?.trim() ?? '');
 
       const matchesSearch = pagefindSlugs
@@ -517,7 +506,7 @@
         matchesSearch &&
         (!selectedCategory   || category === selectedCategory) &&
         (!selectedDifficulty || difficulty.includes(selectedDifficulty)) &&
-        (!maxTime            || parseTime(timeText) <= maxTime) &&
+        (!maxTime            || activeTime <= maxTime * 60) &&
         (!activeTag          || cardTags.includes(activeTag));
 
       const wrapper = (card as HTMLElement).parentElement;

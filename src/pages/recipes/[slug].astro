@@ -3,6 +3,13 @@ import Layout from '../../layouts/Layout.astro';
 import { getCollection } from 'astro:content';
 import { Image } from 'astro:assets';
 
+import {
+  contenidoAHtml,
+  formatearDuracion,
+  pasosDeTipo,
+  textoIngrediente,
+} from '../../lib/receta.ts';
+
 export async function getStaticPaths() {
   const recipes = await getCollection('recipes');
 
@@ -13,7 +20,12 @@ export async function getStaticPaths() {
 }
 
 const { recipe } = Astro.props;
-const { Content } = await recipe.render();
+
+// La receta se pinta desde el frontmatter, no desde el cuerpo del .md. El
+// cuerpo se sigue generando al publicar, pero solo para que el fichero se lea
+// bien en GitHub: aquí la única fuente es la estructura, que es la misma que
+// consume el modo cocina. Así las dos vistas no pueden decir cosas distintas.
+const receta = recipe.data;
 
 const inicio = import.meta.env.BASE_URL.replace(/\/?$/, '/');
 
@@ -21,16 +33,28 @@ const fecha = new Intl.DateTimeFormat('es-ES', {
   day: 'numeric',
   month: 'long',
   year: 'numeric',
-}).format(recipe.data.date);
+}).format(receta.date);
 
-const compra = recipe.data.shopping_list ?? [];
+// Antes era un campo propio (`shopping_list`) que había que mantener a mano en
+// paralelo a los ingredientes. Ahora se deriva: si está en la receta, hay que
+// comprarlo.
+const compra = receta.ingredients.flatMap(grupo => grupo.items.map(textoIngrediente));
 
 const datos = [
-  { etiqueta: 'Dificultad',    valor: recipe.data.difficulty,                pastel: 'rosa' },
-  { etiqueta: 'Tiempo total',  valor: recipe.data.total_time,                pastel: 'cielo' },
-  { etiqueta: 'Tiempo activo', valor: recipe.data.active_time,               pastel: 'mantequilla' },
-  { etiqueta: 'Raciones',      valor: `${recipe.data.servings} personas`,    pastel: 'menta' },
+  { etiqueta: 'Dificultad',    valor: receta.difficulty,                        pastel: 'rosa' },
+  { etiqueta: 'Tiempo total',  valor: formatearDuracion(receta.total_time),     pastel: 'cielo' },
+  { etiqueta: 'Tiempo activo', valor: formatearDuracion(receta.active_time),    pastel: 'mantequilla' },
+  { etiqueta: 'Raciones',      valor: `${receta.servings} ${receta.servings === 1 ? 'persona' : 'personas'}`, pastel: 'menta' },
 ];
+
+// Las secciones del cuerpo, en el mismo orden que tenían en el markdown para
+// que el ciclo de color de los `h2` no se mueva.
+const secciones = [
+  { titulo: 'Reposo',            pasos: pasosDeTipo(receta.steps, 'rest') },
+  { titulo: 'Preparación previa', pasos: pasosDeTipo(receta.steps, 'prep') },
+  { titulo: 'Elaboración',       pasos: pasosDeTipo(receta.steps, 'cook') },
+  { titulo: 'Emplatado',         pasos: pasosDeTipo(receta.steps, 'plate') },
+].filter(seccion => seccion.pasos.length > 0);
 
 const anio = new Date().getFullYear();
 ---
@@ -144,7 +168,50 @@ const anio = new Date().getFullYear();
         )}
 
         <article class="recipe-content">
-          <Content />
+          <p>{receta.description}</p>
+
+          <h2>Ingredientes ({receta.servings} {receta.servings === 1 ? 'persona' : 'personas'})</h2>
+
+          {receta.ingredients.map(grupo => (
+            <>
+              {grupo.group && <h3>{grupo.group}</h3>}
+              <ul>
+                {grupo.items.map(item => <li>{textoIngrediente(item)}</li>)}
+              </ul>
+            </>
+          ))}
+
+          {receta.utensils.length > 0 && (
+            <>
+              <h2>Utensilios</h2>
+              <ul>
+                {receta.utensils.map(utensilio => <li>{utensilio}</li>)}
+              </ul>
+            </>
+          )}
+
+          {secciones.map(seccion => (
+            <>
+              <h2>{seccion.titulo}</h2>
+              {seccion.pasos.map(paso => (
+                <>
+                  <h3>{paso.timer ? `${paso.title} — ${formatearDuracion(paso.timer)}` : paso.title}</h3>
+                  <Fragment set:html={contenidoAHtml(paso.content)} />
+                </>
+              ))}
+            </>
+          ))}
+
+          {receta.notes.length > 0 && (
+            <>
+              <h2>Notas</h2>
+              <ul>
+                {receta.notes.map(nota => (
+                  <li><strong>{nota.title}</strong>: {nota.content}</li>
+                ))}
+              </ul>
+            </>
+          )}
         </article>
       </div>
     </div>

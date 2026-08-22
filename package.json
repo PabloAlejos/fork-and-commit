@@ -7,7 +7,8 @@
     "build": "astro build",
     "preview": "astro preview",
     "astro": "astro",
-    "validar": "node --experimental-strip-types scripts/validar-recetas.mjs"
+    "validar": "node --experimental-strip-types scripts/validar-recetas.mjs",
+    "test": "node --test --experimental-strip-types src/lib/*.test.ts"
   },
   "dependencies": {
     "astro": "^5.17.1",

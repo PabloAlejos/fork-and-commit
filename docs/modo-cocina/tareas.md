@@ -83,16 +83,16 @@ preparado y revisado, pero no se ejecuta.
 
 Bloquea absolutamente todo lo demás.
 
-- [ ] **1.1** Escribir el schema Zod nuevo en `src/content/config.ts`. Sustituye
+- [x] **1.1** Escribir el schema Zod nuevo en `src/content/config.ts`. Sustituye
       al actual entero. Campos según §3 de la especificación, menos
       `scalable_time` y `draft`, más `description` (los ejemplos lo traen y hoy
       esa frase vive en el cuerpo) e `image`.
-- [ ] **1.2** `superRefine` que valide que **cada id de `uses` existe** en
+- [x] **1.2** `superRefine` que valide que **cada id de `uses` existe** en
       `ingredients`. Debe reventar el build con el slug de la receta y el id
       huérfano en el mensaje. Es la red que sostiene todo lo demás: sin ella,
       un `uses` mal escrito se convierte en un hueco silencioso en el modo
       cocina.
-- [ ] **1.3** Validar también que los `id` de ingrediente **no se repiten**
+- [x] **1.3** Validar también que los `id` de ingrediente **no se repiten**
       dentro de una receta, y que los `id` de paso tampoco. La spec no lo pide,
       pero `uses` resuelve por id y un duplicado da el ingrediente equivocado.
 - [ ] **1.4** Script de migración de los 10 `.md` viejos, en el back, de un solo
@@ -150,26 +150,26 @@ No hay herramienta de migraciones.
 
 Depende de §1. **El resultado visual debe ser indistinguible del actual.**
 
-- [ ] **3.1** `[slug].astro`: quitar `<Content />` (línea 147) y pintar las
+- [x] **3.1** `[slug].astro`: quitar `<Content />` (línea 147) y pintar las
       secciones desde el frontmatter, reusando el CSS que ya está.
-- [ ] **3.2** La lista de la compra (`[slug].astro:26`) se deriva de
+- [x] **3.2** La lista de la compra (`[slug].astro:26`) se deriva de
       `ingredients` en lugar de `shopping_list`. **Cambia lo que se ve**: hoy es
       una lista corta de nombres a comprar; pasa a ser todos los ingredientes
       con su cantidad. El componente y la interacción de checklist no cambian.
       Es el único punto donde la promesa de «igual que ahora» se rompe a
       propósito.
-- [ ] **3.3** Utilidad `formatearDuracion(segundos)` → `"2 h 30 min"`, `"35 min"`,
+- [x] **3.3** Utilidad `formatearDuracion(segundos)` → `"2 h 30 min"`, `"35 min"`,
       `"30 s"`. Los tiempos llegan como número y la ficha los muestra como texto
       (`[slug].astro:29-30`).
-- [ ] **3.4** Utilidad `formatearCantidad(amount, amount_max, unit)`:
+- [x] **3.4** Utilidad `formatearCantidad(amount, amount_max, unit)`:
       fracciones (`0.5` → `½`, `1.5` → `1½`, `0.25` → `¼`, `0.75` → `¾`),
       rangos, y `amount: null` sin número (0.1). Pura y testeable.
-- [ ] **3.5** `RecipeFilters.astro`: **borrar `parseTime`** (línea ~483) y
+- [x] **3.5** `RecipeFilters.astro`: **borrar `parseTime`** (línea ~483) y
       comparar números. El parser frágil desaparece con el cambio de formato.
       El filtro pasa a mirar `active_time` (0.2).
-- [ ] **3.6** `RecipeCard.astro`: `totalTime: string` → `number`, y formatear
+- [x] **3.6** `RecipeCard.astro`: `totalTime: string` → `number`, y formatear
       con 3.3.
-- [ ] **3.7** Sección de **utensilios** en la vista de lectura. Es un campo
+- [x] **3.7** Sección de **utensilios** en la vista de lectura. Es un campo
       nuevo que hoy no se pinta en ningún sitio.
 
 ---
