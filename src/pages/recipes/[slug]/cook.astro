@@ -1,0 +1,983 @@
+---
+import Layout from '../../../layouts/Layout.astro';
+import { getCollection } from 'astro:content';
+
+import {
+  LIMITE_TEMPORIZADOR,
+  contenidoAHtml,
+  formatearDuracion,
+  indexarIngredientes,
+  ingredientesDelPaso,
+  pasosDeTipo,
+  textoIngrediente,
+} from '../../../lib/receta.ts';
+
+export async function getStaticPaths() {
+  const recipes = await getCollection('recipes');
+
+  return recipes.map(recipe => ({
+    params: { slug: recipe.slug },
+    props: { recipe },
+  }));
+}
+
+const { recipe } = Astro.props;
+const receta = recipe.data;
+
+const inicio = import.meta.env.BASE_URL.replace(/\/?$/, '/');
+const rutaReceta = `${inicio}recipes/${recipe.slug}`;
+
+const indice = indexarIngredientes(receta.ingredients);
+
+// La mise en place se saca del hilo y va toda junta en una pantalla: cuando
+// estás cortando quieres ver todo lo que hay que cortar, no ir de uno en uno.
+// El resto conserva el orden del fichero, que es el orden de ejecución.
+const preparacion = pasosDeTipo(receta.steps, 'prep');
+const ejecucion = receta.steps.filter(paso => paso.type !== 'prep');
+
+// Los reposos se avisan arriba del todo en el resumen. Es la información que
+// decide si puedes ponerte a cocinar ahora o tenías que haber empezado ayer.
+const reposos = pasosDeTipo(receta.steps, 'rest').filter(paso => paso.timer);
+
+// Las pantallas se numeran aquí, en build, y el cliente solo enseña y esconde.
+// Sin plantillas en el navegador: todo el texto va en el HTML desde el
+// principio, que es lo que hace que esto funcione sin conexión.
+let n = 0;
+const pantallaResumen = n++;
+const pantallaPrep = preparacion.length > 0 ? n++ : null;
+const pantallasEjecucion = ejecucion.map(() => n++);
+const pantallaFinal = n++;
+const totalPantallas = n;
+---
+
+<Layout title={`Cocinando · ${receta.title}`}>
+  <div class="cocina" data-cocina data-total={totalPantallas}>
+    <header class="barra-sup">
+      <a href={rutaReceta} class="salir" data-salir>
+        <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true">
+          <path d="M6 6l8 8M14 6l-8 8"/>
+        </svg>
+        salir
+      </a>
+      <span class="posicion" data-posicion aria-live="polite"></span>
+    </header>
+
+    <main class="lienzo">
+      {/* ── Resumen ─────────────────────────────────────────── */}
+      <section class="pantalla" data-pantalla={pantallaResumen}>
+        <p class="sobretitulo">Vas a cocinar</p>
+        <h1 class="titulo-receta">{receta.title}</h1>
+
+        {reposos.length > 0 && (
+          <div class="aviso">
+            <p class="aviso-titulo">Esto no se hace del tirón</p>
+            <ul>
+              {reposos.map(paso => (
+                <li><strong>{paso.title}</strong> — {formatearDuracion(paso.timer!)}</li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+        <div class="bloque">
+          <h2>Ingredientes</h2>
+          {receta.ingredients.map(grupo => (
+            <>
+              {grupo.group && <h3>{grupo.group}</h3>}
+              <ul class="lista-ing">
+                {grupo.items.map(item => <li>{textoIngrediente(item)}</li>)}
+              </ul>
+            </>
+          ))}
+        </div>
+
+        {receta.utensils.length > 0 && (
+          <div class="bloque bloque-utensilios">
+            <h2>Utensilios</h2>
+            <ul class="lista-ing">
+              {receta.utensils.map(u => <li>{u}</li>)}
+            </ul>
+          </div>
+        )}
+      </section>
+
+      {/* ── Mise en place ───────────────────────────────────── */}
+      {pantallaPrep !== null && (
+        <section class="pantalla" data-pantalla={pantallaPrep} hidden>
+          <p class="sobretitulo">Antes de encender el fuego</p>
+          <h2 class="titulo-pantalla">Preparación</h2>
+
+          <ul class="checklist">
+            {preparacion.map(paso => (
+              <li>
+                <label>
+                  <input type="checkbox" data-hecho={paso.id} />
+                  <span class="casilla" aria-hidden="true">
+                    <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M2.4 6.3l2.3 2.3L9.6 3.4"/>
+                    </svg>
+                  </span>
+                  <span class="checklist-texto">
+                    <span class="checklist-titulo">{paso.title}</span>
+                    <Fragment set:html={contenidoAHtml(paso.content)} />
+                    {ingredientesDelPaso(paso, indice).length > 0 && (
+                      <span class="ing-paso">
+                        {ingredientesDelPaso(paso, indice).map(item => (
+                          <span class="chip-ing">{textoIngrediente(item)}</span>
+                        ))}
+                      </span>
+                    )}
+                  </span>
+                </label>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      {/* ── Ejecución ───────────────────────────────────────── */}
+      {ejecucion.map((paso, i) => {
+        const ingredientes = ingredientesDelPaso(paso, indice);
+        const largo = paso.timer !== undefined && paso.timer > LIMITE_TEMPORIZADOR;
+
+        return (
+          <section class="pantalla" data-pantalla={pantallasEjecucion[i]} hidden>
+            <p class="sobretitulo">Paso {i + 1} de {ejecucion.length}</p>
+            <h2 class="titulo-pantalla">{paso.title}</h2>
+
+            {ingredientes.length > 0 && (
+              <div class="ing-paso ing-paso-bloque">
+                {ingredientes.map(item => (
+                  <span class="chip-ing">{textoIngrediente(item)}</span>
+                ))}
+              </div>
+            )}
+
+            <div class="texto-paso">
+              <Fragment set:html={contenidoAHtml(paso.content)} />
+            </div>
+
+            {paso.timer !== undefined && !largo && (
+              <button
+                type="button"
+                class="btn-timer"
+                data-arrancar={paso.id}
+                data-segundos={paso.timer}
+                data-etiqueta={paso.title}
+              >
+                <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <circle cx="10" cy="11" r="7"/><path d="M10 7.5V11l2.6 1.6"/><path d="M7.5 2.4h5"/>
+                </svg>
+                Poner {formatearDuracion(paso.timer)}
+              </button>
+            )}
+
+            {largo && (
+              <div class="reposo-largo">
+                {/* Un setInterval de horas no sobrevive a que bloquees el móvil.
+                    Mejor decir la verdad y ofrecer el temporizador del sistema,
+                    que sí suena con la app cerrada. */}
+                <p><strong>{formatearDuracion(paso.timer!)}</strong> — demasiado para un temporizador del navegador.</p>
+                <a
+                  class="btn-atajo"
+                  href={`shortcuts://x-callback-url/run-shortcut?name=Temporizador&input=${paso.timer}`}
+                >
+                  Usar el temporizador del móvil
+                </a>
+              </div>
+            )}
+          </section>
+        );
+      })}
+
+      {/* ── Final ───────────────────────────────────────────── */}
+      <section class="pantalla pantalla-final" data-pantalla={pantallaFinal} hidden>
+        <p class="sobretitulo">Listo</p>
+        <h2 class="titulo-pantalla">A comer</h2>
+        <p class="cierre-texto">Si sobra, ya sabes dónde están las notas de conservación.</p>
+
+        {/* Al terminar puede quedar algo al fuego. Se avisa y se ofrece
+            pararlos, pero no se cancelan solos: igual el caldo sigue. */}
+        <div class="pendientes" data-pendientes hidden>
+          <p data-pendientes-texto></p>
+          <button type="button" class="btn-atajo" data-parar-todo>parar los temporizadores</button>
+        </div>
+
+        <a href={rutaReceta} class="btn-volver">volver a la receta</a>
+      </section>
+    </main>
+
+    {/* Barra de temporizadores: fija, visible en todas las pantallas, y con
+        varios a la vez. Es el requisito que rompe el diseño ingenuo. */}
+    <div class="timers" data-timers hidden aria-live="polite"></div>
+
+    <nav class="navegacion">
+      <button type="button" class="nav-btn" data-anterior>
+        <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M12.5 4.5L7 10l5.5 5.5"/>
+        </svg>
+        <span>anterior</span>
+      </button>
+      <button type="button" class="nav-btn nav-btn-principal" data-siguiente>
+        <span data-etiqueta-siguiente>Empezar</span>
+        <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M7.5 4.5L13 10l-5.5 5.5"/>
+        </svg>
+      </button>
+    </nav>
+  </div>
+</Layout>
+
+<script>
+  const raiz = document.querySelector<HTMLElement>('[data-cocina]');
+  if (raiz) {
+    const total = Number(raiz.dataset.total);
+    const pantallas = Array.from(raiz.querySelectorAll<HTMLElement>('[data-pantalla]'));
+    const barra = raiz.querySelector<HTMLElement>('[data-timers]')!;
+    const posicion = raiz.querySelector<HTMLElement>('[data-posicion]')!;
+    const btnAnterior = raiz.querySelector<HTMLButtonElement>('[data-anterior]')!;
+    const btnSiguiente = raiz.querySelector<HTMLButtonElement>('[data-siguiente]')!;
+    const etiquetaSiguiente = raiz.querySelector<HTMLElement>('[data-etiqueta-siguiente]')!;
+
+    const CLAVE = `cocina:${location.pathname}`;
+
+    interface Timer {
+      pasoId: string;
+      etiqueta: string;
+      /** Timestamp absoluto. Nunca un contador que se decrementa: si iOS
+          suspende la pestaña, un contador pierde tiempo y una fecha no. */
+      finEn: number;
+      duracion: number;
+      pantalla: number;
+      avisado: boolean;
+    }
+
+    let indice = 0;
+    const timers = new Map<string, Timer>();
+
+    // ── Persistencia ────────────────────────────────────────────────────────
+    // Solo dentro de la pestaña. Cubre el caso real de salir a mirar la receta
+    // y volver: sin esto, los timers en marcha se pierden.
+    function guardar() {
+      try {
+        sessionStorage.setItem(CLAVE, JSON.stringify({
+          indice,
+          timers: [...timers.values()],
+          hechos: [...raiz!.querySelectorAll<HTMLInputElement>('[data-hecho]')]
+            .filter(c => c.checked)
+            .map(c => c.dataset.hecho),
+        }));
+      } catch {
+        // Modo privado, cuota llena: que no se caiga el modo cocina por esto.
+      }
+    }
+
+    function restaurar() {
+      let guardado: any;
+      try {
+        guardado = JSON.parse(sessionStorage.getItem(CLAVE) ?? 'null');
+      } catch {
+        return;
+      }
+      if (!guardado) return;
+
+      for (const t of guardado.timers ?? []) {
+        // Los que vencieron mientras no estabas se recuperan ya terminados.
+        timers.set(t.pasoId, t);
+      }
+      for (const id of guardado.hechos ?? []) {
+        const casilla = raiz!.querySelector<HTMLInputElement>(`[data-hecho="${id}"]`);
+        if (casilla) casilla.checked = true;
+      }
+      if (typeof guardado.indice === 'number') indice = guardado.indice;
+    }
+
+    // ── Navegación ──────────────────────────────────────────────────────────
+    /**
+     * En el salteado hay cuatro pasos seguidos con temporizador sobre la misma
+     * sartén. Si no se limpian, la barra se llena de cuentas a cero de pasos
+     * que ya has dejado atrás. Se van solos los que han terminado y quedan
+     * detrás de donde estás; los que siguen corriendo se quedan, que es el
+     * caso del horno del ramen.
+     */
+    function limpiarTerminados() {
+      const ahora = Date.now();
+      for (const timer of [...timers.values()]) {
+        if (timer.finEn <= ahora && timer.pantalla < indice) {
+          timers.delete(timer.pasoId);
+          raiz!.querySelector(`[data-arrancar="${timer.pasoId}"]`)?.classList.remove('btn-timer-activo');
+        }
+      }
+    }
+
+    function mostrar(i: number) {
+      indice = Math.max(0, Math.min(total - 1, i));
+
+      limpiarTerminados();
+
+      pantallas.forEach(p => {
+        p.hidden = Number(p.dataset.pantalla) !== indice;
+      });
+
+      posicion.textContent = indice === 0 ? '' : `${indice} / ${total - 1}`;
+      btnAnterior.hidden = indice === 0;
+      etiquetaSiguiente.textContent = indice === 0 ? 'Empezar' : 'siguiente';
+      btnSiguiente.hidden = indice === total - 1;
+
+      window.scrollTo({ top: 0, behavior: 'instant' as ScrollBehavior });
+      pintarTimers();
+      avisarPendientes();
+      guardar();
+    }
+
+    const pendientes = raiz.querySelector<HTMLElement>('[data-pendientes]');
+    const pendientesTexto = raiz.querySelector<HTMLElement>('[data-pendientes-texto]');
+
+    function avisarPendientes() {
+      if (!pendientes || !pendientesTexto) return;
+
+      const enMarcha = [...timers.values()].filter(t => t.finEn > Date.now());
+      const mostrarlo = indice === total - 1 && enMarcha.length > 0;
+
+      pendientes.hidden = !mostrarlo;
+      if (mostrarlo) {
+        pendientesTexto.textContent =
+          enMarcha.length === 1
+            ? `Sigue corriendo el temporizador de «${enMarcha[0].etiqueta}».`
+            : `Siguen corriendo ${enMarcha.length} temporizadores.`;
+      }
+    }
+
+    raiz.querySelector('[data-parar-todo]')?.addEventListener('click', () => {
+      for (const timer of timers.values()) {
+        raiz!.querySelector(`[data-arrancar="${timer.pasoId}"]`)?.classList.remove('btn-timer-activo');
+      }
+      timers.clear();
+      pintarTimers();
+      avisarPendientes();
+      guardar();
+    });
+
+    btnAnterior.addEventListener('click', () => mostrar(indice - 1));
+    btnSiguiente.addEventListener('click', () => mostrar(indice + 1));
+
+    // Swipe como atajo, nunca como único camino: los botones siguen ahí.
+    let inicioX = 0;
+    let inicioY = 0;
+    raiz.addEventListener('touchstart', e => {
+      inicioX = e.changedTouches[0].clientX;
+      inicioY = e.changedTouches[0].clientY;
+    }, { passive: true });
+
+    raiz.addEventListener('touchend', e => {
+      const dx = e.changedTouches[0].clientX - inicioX;
+      const dy = e.changedTouches[0].clientY - inicioY;
+      // Horizontal de verdad: si el dedo va en diagonal, es scroll.
+      if (Math.abs(dx) > 70 && Math.abs(dx) > Math.abs(dy) * 2) {
+        mostrar(indice + (dx < 0 ? 1 : -1));
+      }
+    }, { passive: true });
+
+    // ── Sonido ──────────────────────────────────────────────────────────────
+    // Generado, no un fichero: no hay que meter un binario en el repo y suena
+    // igual sin conexión.
+    let audio: AudioContext | null = null;
+
+    function pitar() {
+      try {
+        audio ??= new AudioContext();
+        if (audio.state === 'suspended') audio.resume();
+
+        [0, 0.28, 0.56].forEach(retraso => {
+          const osc = audio!.createOscillator();
+          const vol = audio!.createGain();
+          osc.connect(vol);
+          vol.connect(audio!.destination);
+          osc.frequency.value = 880;
+          osc.type = 'triangle';
+          const t = audio!.currentTime + retraso;
+          vol.gain.setValueAtTime(0.0001, t);
+          vol.gain.exponentialRampToValueAtTime(0.35, t + 0.02);
+          vol.gain.exponentialRampToValueAtTime(0.0001, t + 0.2);
+          osc.start(t);
+          osc.stop(t + 0.22);
+        });
+      } catch {
+        // Sin audio disponible nos queda la vibración y el aviso visual.
+      }
+    }
+
+    // ── Temporizadores ──────────────────────────────────────────────────────
+    function cuenta(segundos: number): string {
+      const s = Math.max(0, Math.round(segundos));
+      const h = Math.floor(s / 3600);
+      const m = Math.floor((s % 3600) / 60);
+      const seg = s % 60;
+      const dosCifras = (n: number) => String(n).padStart(2, '0');
+      return h > 0 ? `${h}:${dosCifras(m)}:${dosCifras(seg)}` : `${m}:${dosCifras(seg)}`;
+    }
+
+    function arrancar(boton: HTMLElement) {
+      const pasoId = boton.dataset.arrancar!;
+      const segundos = Number(boton.dataset.segundos);
+
+      timers.set(pasoId, {
+        pasoId,
+        etiqueta: boton.dataset.etiqueta ?? '',
+        finEn: Date.now() + segundos * 1000,
+        duracion: segundos,
+        pantalla: Number(boton.closest<HTMLElement>('[data-pantalla]')!.dataset.pantalla),
+        avisado: false,
+      });
+
+      boton.classList.add('btn-timer-activo');
+      // El primer toque del usuario es la única ocasión de desbloquear el
+      // audio en iOS. Si se espera al final del timer, no suena.
+      audio ??= new AudioContext();
+      audio.resume().catch(() => {});
+
+      pintarTimers();
+      guardar();
+    }
+
+    raiz.addEventListener('click', e => {
+      const boton = (e.target as HTMLElement).closest<HTMLElement>('[data-arrancar]');
+      if (boton) arrancar(boton);
+    });
+
+    function pintarTimers() {
+      barra.hidden = timers.size === 0;
+      if (timers.size === 0) return;
+
+      const ahora = Date.now();
+      barra.replaceChildren();
+
+      for (const timer of timers.values()) {
+        const restante = (timer.finEn - ahora) / 1000;
+        const terminado = restante <= 0;
+
+        const fila = document.createElement('div');
+        fila.className = `timer ${terminado ? 'timer-fin' : ''}`;
+
+        const ir = document.createElement('button');
+        ir.type = 'button';
+        ir.className = 'timer-ir';
+        ir.innerHTML = `<span class="timer-etiqueta">${timer.etiqueta}</span><span class="timer-cuenta">${terminado ? '¡ya!' : cuenta(restante)}</span>`;
+        ir.addEventListener('click', () => mostrar(timer.pantalla));
+
+        const quitar = document.createElement('button');
+        quitar.type = 'button';
+        quitar.className = 'timer-quitar';
+        quitar.setAttribute('aria-label', `Quitar temporizador de ${timer.etiqueta}`);
+        quitar.textContent = '×';
+        quitar.addEventListener('click', () => {
+          timers.delete(timer.pasoId);
+          raiz!.querySelector(`[data-arrancar="${timer.pasoId}"]`)?.classList.remove('btn-timer-activo');
+          pintarTimers();
+          guardar();
+        });
+
+        fila.append(ir, quitar);
+        barra.append(fila);
+      }
+    }
+
+    // Un solo interval para todos los timers, no uno por timer.
+    setInterval(() => {
+      if (timers.size === 0) return;
+
+      const ahora = Date.now();
+      let hayNuevoFin = false;
+
+      for (const timer of timers.values()) {
+        if (!timer.avisado && timer.finEn <= ahora) {
+          timer.avisado = true;
+          hayNuevoFin = true;
+        }
+      }
+
+      if (hayNuevoFin) {
+        pitar();
+        navigator.vibrate?.([300, 120, 300, 120, 500]);
+        guardar();
+      }
+
+      pintarTimers();
+      avisarPendientes();
+    }, 1000);
+
+    // ── Pantalla encendida ──────────────────────────────────────────────────
+    // Es lo que hace que los timers funcionen de verdad: con la pantalla
+    // apagada el JavaScript se congela y no suena nada.
+    let wakeLock: WakeLockSentinel | null = null;
+
+    async function pedirWakeLock() {
+      try {
+        wakeLock = await navigator.wakeLock?.request('screen');
+      } catch {
+        // No está en todos los navegadores y su ausencia no rompe nada.
+      }
+    }
+
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState !== 'visible') return;
+      // iOS suelta el lock al cambiar de app y no lo devuelve solo.
+      pedirWakeLock();
+      // Y al volver, los timers se recalculan contra el reloj: los que
+      // vencieron mientras la pestaña dormía se marcan y avisan ahora.
+      pintarTimers();
+    });
+
+    raiz.addEventListener('change', e => {
+      if ((e.target as HTMLElement).matches('[data-hecho]')) guardar();
+    });
+
+    window.addEventListener('pagehide', () => wakeLock?.release());
+
+    restaurar();
+    mostrar(indice);
+    pintarTimers();
+    pedirWakeLock();
+  }
+</script>
+
+<style>
+  /* Pensado para un iPhone en la encimera, en vertical, con las manos sucias:
+     una sola columna, tipografía grande y las acciones abajo, que es donde
+     llega el pulgar. */
+  .cocina {
+    min-height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    background: var(--crema);
+  }
+
+  .barra-sup {
+    position: sticky;
+    top: 0;
+    z-index: 3;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.75rem 1rem;
+    background: var(--crema);
+    border-bottom: var(--borde-fino);
+  }
+
+  .salir {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    min-height: 44px;
+    padding: 0 0.75rem;
+    font-family: var(--display);
+    font-weight: 700;
+    text-decoration: none;
+    color: var(--tinta);
+  }
+
+  .salir svg { width: 18px; height: 18px; }
+
+  .posicion {
+    font-family: var(--pixel);
+    font-size: 0.8125rem;
+    color: var(--tinta-suave);
+  }
+
+  .lienzo {
+    flex: 1;
+    width: 100%;
+    max-width: 34rem;
+    margin: 0 auto;
+    padding: 1.25rem 1rem 1rem;
+  }
+
+  .sobretitulo {
+    font-family: var(--pixel);
+    font-size: 0.75rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--tinta-suave);
+    margin-bottom: 0.5rem;
+  }
+
+  .titulo-receta,
+  .titulo-pantalla {
+    font-family: var(--display);
+    font-weight: 800;
+    line-height: 1.1;
+    margin-bottom: 1.25rem;
+    text-wrap: balance;
+  }
+
+  .titulo-receta { font-size: 2rem; }
+  /* Grande de verdad: esto se lee de pie y a distancia de brazo. */
+  .titulo-pantalla { font-size: 2.25rem; }
+
+  .aviso {
+    background: var(--melocoton);
+    color: var(--melocoton-ink);
+    border: var(--borde);
+    border-radius: var(--r-tarjeta);
+    box-shadow: 6px 6px 0 var(--melocoton-hondo);
+    padding: 1.125rem 1.25rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .aviso-titulo {
+    font-family: var(--display);
+    font-weight: 800;
+    font-size: 1.0625rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .aviso ul { list-style: none; display: grid; gap: 0.35rem; }
+
+  .bloque {
+    background: var(--blanco);
+    border: var(--borde);
+    border-radius: var(--r-tarjeta);
+    padding: 1.25rem 1.375rem;
+    margin-bottom: 1.25rem;
+  }
+
+  .bloque h2 {
+    font-family: var(--display);
+    font-size: 1.375rem;
+    font-weight: 800;
+    margin-bottom: 0.75rem;
+  }
+
+  .bloque h3 {
+    font-family: var(--display);
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--tinta-suave);
+    margin: 1rem 0 0.4rem;
+  }
+
+  .lista-ing { list-style: none; display: grid; gap: 0.45rem; }
+
+  .lista-ing li {
+    font-size: 1.0625rem;
+    line-height: 1.45;
+    padding-left: 1rem;
+    position: relative;
+  }
+
+  .lista-ing li::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0.6em;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--tinta);
+  }
+
+  /* ── Mise en place ─────────────────────────────────────── */
+  .checklist { list-style: none; display: grid; gap: 0.75rem; }
+
+  .checklist label {
+    display: flex;
+    gap: 0.875rem;
+    align-items: flex-start;
+    background: var(--blanco);
+    border: var(--borde-fino);
+    border-radius: var(--r-caja);
+    padding: 1rem 1.125rem;
+    cursor: pointer;
+    /* 44px de zona táctil mínima, que se pulsa con el dedo. */
+    min-height: 44px;
+  }
+
+  .checklist input {
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+  }
+
+  .casilla {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    margin-top: 0.15rem;
+    background: var(--blanco);
+    border: var(--borde-fino);
+    border-radius: 9px;
+    color: transparent;
+  }
+
+  .casilla svg { width: 15px; height: 15px; }
+
+  .checklist input:checked ~ .casilla {
+    background: var(--tinta);
+    color: var(--menta);
+  }
+
+  .checklist input:checked ~ .checklist-texto {
+    color: var(--tinta-suave);
+    text-decoration: line-through;
+  }
+
+  .checklist input:focus-visible ~ .casilla {
+    outline: 3px solid var(--tinta);
+    outline-offset: 3px;
+  }
+
+  .checklist-texto { display: block; }
+
+  .checklist-titulo {
+    display: block;
+    font-family: var(--display);
+    font-weight: 800;
+    font-size: 1.125rem;
+    margin-bottom: 0.2rem;
+  }
+
+  .checklist-texto :global(p) { font-size: 1rem; line-height: 1.5; }
+
+  /* ── Ingredientes del paso ─────────────────────────────── */
+  .ing-paso {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    margin-top: 0.6rem;
+  }
+
+  .ing-paso-bloque {
+    margin: 0 0 1.25rem;
+    padding: 0.875rem 1rem;
+    background: var(--menta);
+    border: var(--borde-fino);
+    border-radius: var(--r-caja);
+  }
+
+  .chip-ing {
+    display: inline-block;
+    background: var(--blanco);
+    border: 2px solid var(--tinta);
+    border-radius: var(--r-pildora);
+    padding: 0.3rem 0.7rem;
+    font-size: 0.9375rem;
+    font-weight: 600;
+  }
+
+  /* ── Texto del paso ────────────────────────────────────── */
+  .texto-paso :global(p) {
+    font-size: 1.25rem;
+    line-height: 1.6;
+    margin-bottom: 1rem;
+    text-wrap: pretty;
+  }
+
+  .texto-paso :global(strong) {
+    font-weight: 800;
+    background: var(--mantequilla);
+    box-shadow: 0 -0.35em 0 0 var(--mantequilla) inset;
+  }
+
+  /* ── Temporizador del paso ─────────────────────────────── */
+  .btn-timer {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    min-height: 56px;
+    padding: 0 1.5rem;
+    font-family: var(--display);
+    font-size: 1.125rem;
+    font-weight: 800;
+    color: var(--tinta);
+    background: var(--cielo);
+    border: var(--borde);
+    border-radius: var(--r-pildora);
+    box-shadow: 5px 5px 0 var(--cielo-hondo);
+    cursor: pointer;
+  }
+
+  .btn-timer svg { width: 22px; height: 22px; }
+
+  .btn-timer-activo {
+    background: var(--menta);
+    box-shadow: 5px 5px 0 var(--menta-hondo);
+  }
+
+  .reposo-largo {
+    background: var(--lavanda);
+    color: var(--lavanda-ink);
+    border: var(--borde);
+    border-radius: var(--r-caja);
+    padding: 1rem 1.125rem;
+  }
+
+  .reposo-largo p { margin-bottom: 0.75rem; }
+
+  .btn-atajo {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    padding: 0 1.125rem;
+    font-weight: 700;
+    color: var(--tinta);
+    background: var(--blanco);
+    border: var(--borde-fino);
+    border-radius: var(--r-pildora);
+    text-decoration: none;
+  }
+
+  /* ── Final ─────────────────────────────────────────────── */
+  .pendientes {
+    background: var(--rosa);
+    color: var(--rosa-ink);
+    border: var(--borde-fino);
+    border-radius: var(--r-caja);
+    padding: 1rem 1.125rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .pendientes p { margin-bottom: 0.75rem; font-weight: 600; }
+
+  .pantalla-final { text-align: center; padding-top: 3rem; }
+  .cierre-texto { font-size: 1.0625rem; margin-bottom: 1.75rem; color: var(--tinta-suave); }
+
+  .btn-volver {
+    display: inline-flex;
+    align-items: center;
+    min-height: 56px;
+    padding: 0 1.75rem;
+    font-family: var(--display);
+    font-weight: 800;
+    color: var(--tinta);
+    background: var(--menta);
+    border: var(--borde);
+    border-radius: var(--r-pildora);
+    box-shadow: 5px 5px 0 var(--menta-hondo);
+    text-decoration: none;
+  }
+
+  /* ── Barra de temporizadores ───────────────────────────── */
+  .timers {
+    position: sticky;
+    bottom: 0;
+    z-index: 2;
+    display: grid;
+    gap: 0.5rem;
+    padding: 0.75rem 1rem;
+    background: var(--crema);
+    border-top: var(--borde-fino);
+  }
+
+  .timer {
+    display: flex;
+    align-items: stretch;
+    gap: 0.5rem;
+    background: var(--cielo);
+    border: var(--borde-fino);
+    border-radius: var(--r-pildora);
+    overflow: hidden;
+  }
+
+  .timer-ir {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    min-height: 48px;
+    padding: 0 0.5rem 0 1.125rem;
+    background: none;
+    border: none;
+    font: inherit;
+    color: var(--tinta);
+    cursor: pointer;
+    text-align: left;
+  }
+
+  .timer-etiqueta {
+    font-weight: 700;
+    font-size: 0.9375rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .timer-cuenta {
+    font-family: var(--pixel);
+    font-size: 1.0625rem;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .timer-quitar {
+    flex: 0 0 auto;
+    width: 48px;
+    background: none;
+    border: none;
+    border-left: var(--borde-fino);
+    font-size: 1.5rem;
+    line-height: 1;
+    color: var(--tinta);
+    cursor: pointer;
+  }
+
+  /* Que se termine un timer no puede bloquear la cocina: avisa fuerte pero
+     no tapa nada ni pide que lo cierres. */
+  .timer-fin {
+    background: var(--rosa);
+    animation: latido 1s ease-in-out infinite;
+  }
+
+  @keyframes latido {
+    50% { box-shadow: 0 0 0 5px var(--rosa-hondo); }
+  }
+
+  /* ── Navegación ────────────────────────────────────────── */
+  .navegacion {
+    position: sticky;
+    bottom: 0;
+    z-index: 2;
+    display: flex;
+    gap: 0.75rem;
+    padding: 0.75rem 1rem calc(0.75rem + env(safe-area-inset-bottom));
+    background: var(--crema);
+    border-top: var(--borde-fino);
+  }
+
+  .nav-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+    /* Grandes: se pulsan sin mirar y con el dedo torpe. */
+    min-height: 60px;
+    padding: 0 1.25rem;
+    font-family: var(--display);
+    font-size: 1.0625rem;
+    font-weight: 800;
+    color: var(--tinta);
+    background: var(--blanco);
+    border: var(--borde);
+    border-radius: var(--r-pildora);
+    cursor: pointer;
+  }
+
+  .nav-btn svg { width: 20px; height: 20px; }
+
+  .nav-btn-principal {
+    flex: 1;
+    background: var(--mantequilla);
+    box-shadow: 5px 5px 0 var(--mantequilla-hondo);
+  }
+
+  .nav-btn:active { transform: translate(2px, 2px); }
+
+  @media (prefers-reduced-motion: reduce) {
+    .timer-fin { animation: none; border-width: 4px; }
+    .nav-btn:active { transform: none; }
+  }
+</style>

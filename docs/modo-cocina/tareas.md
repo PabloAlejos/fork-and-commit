@@ -192,33 +192,33 @@ Depende de §1. **El resultado visual debe ser indistinguible del actual.**
 Aquí empieza la feature de verdad. Todo lo anterior es la condición para poder
 escribirla.
 
-- [ ] **4.1** Ruta `/recipes/[slug]/cook` e isla `client:load`, con los datos
+- [x] **4.1** Ruta `/recipes/[slug]/cook` e isla `client:load`, con los datos
       como props desde la content collection. Sin `fetch` en runtime.
-- [ ] **4.2** Botón de entrada desde la vista de receta y salida de vuelta.
-- [ ] **4.3** Pantalla de **resumen** (§5.1): avisos de reposo arriba,
+- [x] **4.2** Botón de entrada desde la vista de receta y salida de vuelta.
+- [x] **4.3** Pantalla de **resumen** (§5.1): avisos de reposo arriba,
       ingredientes agrupados, utensilios, botón Empezar. Sin selector de
       raciones (0.1).
-- [ ] **4.4** Pantalla de **mise en place** (§5.2): todos los pasos `prep`
+- [x] **4.4** Pantalla de **mise en place** (§5.2): todos los pasos `prep`
       juntos con checkbox. **Se omite entera** si no hay pasos `prep`.
-- [ ] **4.5** Pantalla de **ejecución** (§5.3), una por paso: posición, título,
+- [x] **4.5** Pantalla de **ejecución** (§5.3), una por paso: posición, título,
       ingredientes del paso, contenido con negritas renderizadas, navegación
       con zonas táctiles grandes en la mitad inferior.
-- [ ] **4.6** Pantalla **final** (§5.5).
-- [ ] **4.7** Wake Lock (§7): `try/catch`, liberar al salir y **re-adquirir en
+- [x] **4.6** Pantalla **final** (§5.5).
+- [x] **4.7** Wake Lock (§7): `try/catch`, liberar al salir y **re-adquirir en
       `visibilitychange`** — iOS lo suelta al cambiar de app y no lo devuelve.
-- [ ] **4.8** Timers: estado como `endsAt` absoluto, **un solo `setInterval`**
+- [x] **4.8** Timers: estado como `endsAt` absoluto, **un solo `setInterval`**
       para todos. Nunca decrementar un contador.
-- [ ] **4.9** Barra de timers activos persistente (§5.4). **Varios
+- [x] **4.9** Barra de timers activos persistente (§5.4). **Varios
       simultáneos.** Pulsar un timer navega a su paso.
-- [ ] **4.10** Fin de timer: sonido con asset local, `navigator.vibrate`, estado
+- [x] **4.10** Fin de timer: sonido con asset local, `navigator.vibrate`, estado
       visual hasta descartar. Sin modal bloqueante.
-- [ ] **4.11** Recálculo contra `Date.now()` en `visibilitychange`: los timers
+- [x] **4.11** Recálculo contra `Date.now()` en `visibilitychange`: los timers
       vencidos mientras la pestaña dormía se marcan terminados al volver.
-- [ ] **4.12** Escape hatch a Atajos de iOS para timers largos (§7.3), acción
+- [x] **4.12** Escape hatch a Atajos de iOS para timers largos (§7.3), acción
       secundaria. Es lo que cubre los reposos de 0.2.
-- [ ] **4.13** Pulido táctil: 44×44 px mínimo, contraste, tipografía grande,
+- [x] **4.13** Pulido táctil: 44×44 px mínimo, contraste, tipografía grande,
       sin scroll para las acciones principales, `prefers-reduced-motion`.
-- [ ] **4.14** Swipe entre pasos, **siempre con botones como alternativa**.
+- [x] **4.14** Swipe entre pasos, **siempre con botones como alternativa**.
 
 ### Casos límite a verificar (§9, ya sin los de escalado)
 
