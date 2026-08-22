@@ -31,6 +31,12 @@ Consecuencias, todas simplificaciones:
 - Muere también la decisión pendiente sobre las cantidades dentro de la prosa
   («500 ml del agua fría»). Si nada escala, el texto nunca se contradice con
   `uses`. No hace falta regla editorial ni plantillas `{agua}`.
+- Si una receta trae una incoherencia entre sus ingredientes y su prosa, **se
+  corrige a mano en el fichero**. No se resuelve con código.
+
+> Conviene recordar por qué esto no quita nada: hoy la web **tampoco** escala.
+> `servings` solo se pinta, en la ficha y en la tarjeta. El escalado habría sido
+> funcionalidad nueva, no una que se pierda.
 
 **0.2 — Tiempos y fermentaciones** (decisión delegada):
 
