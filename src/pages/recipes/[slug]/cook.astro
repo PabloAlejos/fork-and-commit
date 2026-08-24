@@ -51,6 +51,13 @@ const totalPantallas = n;
 ---
 
 <Layout title={`Cocinando · ${receta.title}`}>
+  {/* Antes de pintar nada: si esperamos al script del final, el modo oscuro
+      entra con un fogonazo crema. Va inline y va aquí a propósito. */}
+  <script is:inline>
+    document.documentElement.dataset.cocina =
+      localStorage.getItem('cocina:tema') === 'claro' ? 'claro' : 'oscuro';
+  </script>
+
   <div class="cocina" data-cocina data-total={totalPantallas}>
     <header class="barra-sup">
       <a href={rutaReceta} class="salir" data-salir>
@@ -59,8 +66,26 @@ const totalPantallas = n;
         </svg>
         salir
       </a>
-      <span class="posicion" data-posicion aria-live="polite"></span>
+      <div class="barra-der">
+        <button type="button" class="tema" data-tema aria-label="Cambiar entre claro y oscuro">
+          <svg class="ico-luna" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M16.5 12.4A7 7 0 0 1 7.6 3.5a7 7 0 1 0 8.9 8.9z"/>
+          </svg>
+          <svg class="ico-sol" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <circle cx="10" cy="10" r="3.6"/>
+            <path d="M10 2v1.6M10 16.4V18M18 10h-1.6M3.6 10H2M15.7 4.3l-1.1 1.1M5.4 14.6l-1.1 1.1M15.7 15.7l-1.1-1.1M5.4 5.4L4.3 4.3"/>
+          </svg>
+        </button>
+      </div>
     </header>
+
+    {/* Cuántos pasos quedan, de un vistazo y sin leer. Un segmento por
+        pantalla de cocinado — ni el resumen ni el final cuentan. */}
+    <div class="progreso" aria-hidden="true">
+      {Array.from({ length: totalPantallas - 2 }).map((_, i) => (
+        <span class="segmento" data-segmento={i + 1}></span>
+      ))}
+    </div>
 
     <main class="lienzo">
       {/* ── Resumen ─────────────────────────────────────────── */}
@@ -158,18 +183,23 @@ const totalPantallas = n;
             </div>
 
             {paso.timer !== undefined && !largo && (
-              <button
-                type="button"
-                class="btn-timer"
-                data-arrancar={paso.id}
-                data-segundos={paso.timer}
-                data-etiqueta={paso.title}
-              >
-                <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                  <circle cx="10" cy="11" r="7"/><path d="M10 7.5V11l2.6 1.6"/><path d="M7.5 2.4h5"/>
-                </svg>
-                Poner {formatearDuracion(paso.timer)}
-              </button>
+              <div class="zona-timer">
+                {/* El número grande es el protagonista, y al arrancar pasa a
+                    ser la cuenta atrás en vivo. */}
+                <p class="duracion" data-duracion-de={paso.id}>{formatearDuracion(paso.timer)}</p>
+                <button
+                  type="button"
+                  class="btn-play"
+                  data-arrancar={paso.id}
+                  data-segundos={paso.timer}
+                  data-etiqueta={paso.title}
+                  aria-label={`Poner temporizador de ${formatearDuracion(paso.timer)}`}
+                >
+                  <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                    <path d="M9 6.5l9 5.5-9 5.5z"/>
+                  </svg>
+                </button>
+              </div>
             )}
 
             {largo && (
@@ -211,17 +241,18 @@ const totalPantallas = n;
         varios a la vez. Es el requisito que rompe el diseño ingenuo. */}
     <div class="timers" data-timers hidden aria-live="polite"></div>
 
-    <nav class="navegacion">
-      <button type="button" class="nav-btn" data-anterior>
-        <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          <path d="M12.5 4.5L7 10l5.5 5.5"/>
+    <nav class="navegacion" data-nav>
+      <button type="button" class="nav-circ" data-anterior aria-label="Paso anterior">
+        <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M12 4.5L6.5 10l5.5 5.5"/>
         </svg>
-        <span>anterior</span>
       </button>
-      <button type="button" class="nav-btn nav-btn-principal" data-siguiente>
-        <span data-etiqueta-siguiente>Empezar</span>
-        <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          <path d="M7.5 4.5L13 10l-5.5 5.5"/>
+      <span class="nav-cuenta" data-posicion aria-live="polite"></span>
+
+      <button type="button" class="nav-circ nav-avanza" data-siguiente>
+        <span class="nav-empezar" data-etiqueta-siguiente>Empezar</span>
+        <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M8 4.5L13.5 10 8 15.5"/>
         </svg>
       </button>
     </nav>
@@ -237,7 +268,8 @@ const totalPantallas = n;
     const posicion = raiz.querySelector<HTMLElement>('[data-posicion]')!;
     const btnAnterior = raiz.querySelector<HTMLButtonElement>('[data-anterior]')!;
     const btnSiguiente = raiz.querySelector<HTMLButtonElement>('[data-siguiente]')!;
-    const etiquetaSiguiente = raiz.querySelector<HTMLElement>('[data-etiqueta-siguiente]')!;
+    const nav = raiz.querySelector<HTMLElement>('[data-nav]');
+    const segmentos = Array.from(raiz.querySelectorAll<HTMLElement>('[data-segmento]'));
 
     const CLAVE = `cocina:${location.pathname}`;
 
@@ -305,7 +337,7 @@ const totalPantallas = n;
       for (const timer of [...timers.values()]) {
         if (timer.finEn <= ahora && timer.pantalla < indice) {
           timers.delete(timer.pasoId);
-          raiz!.querySelector(`[data-arrancar="${timer.pasoId}"]`)?.classList.remove('btn-timer-activo');
+          raiz!.querySelector(`[data-arrancar="${timer.pasoId}"]`)?.classList.remove('btn-play-activo');
         }
       }
     }
@@ -319,10 +351,21 @@ const totalPantallas = n;
         p.hidden = Number(p.dataset.pantalla) !== indice;
       });
 
-      posicion.textContent = indice === 0 ? '' : `${indice} / ${total - 1}`;
+      // El resumen y el final no cuentan como pasos: «1 de 6» tiene que
+      // coincidir con lo que ve el que cocina, no con el array.
+      const pasos = total - 2;
+      const enPaso = indice >= 1 && indice <= pasos;
+
+      posicion.textContent = enPaso ? `${indice} de ${pasos}` : '';
       btnAnterior.hidden = indice === 0;
-      etiquetaSiguiente.textContent = indice === 0 ? 'Empezar' : 'siguiente';
       btnSiguiente.hidden = indice === total - 1;
+      nav?.classList.toggle('navegacion-inicio', indice === 0);
+
+      segmentos.forEach(seg => {
+        const n = Number(seg.dataset.segmento);
+        seg.classList.toggle('segmento-hecho', n < indice);
+        seg.classList.toggle('segmento-actual', n === indice);
+      });
 
       window.scrollTo({ top: 0, behavior: 'instant' as ScrollBehavior });
       pintarTimers();
@@ -350,7 +393,7 @@ const totalPantallas = n;
 
     raiz.querySelector('[data-parar-todo]')?.addEventListener('click', () => {
       for (const timer of timers.values()) {
-        raiz!.querySelector(`[data-arrancar="${timer.pasoId}"]`)?.classList.remove('btn-timer-activo');
+        raiz!.querySelector(`[data-arrancar="${timer.pasoId}"]`)?.classList.remove('btn-play-activo');
       }
       timers.clear();
       pintarTimers();
@@ -430,7 +473,7 @@ const totalPantallas = n;
         avisado: false,
       });
 
-      boton.classList.add('btn-timer-activo');
+      boton.classList.add('btn-play-activo');
       // El primer toque del usuario es la única ocasión de desbloquear el
       // audio en iOS. Si se espera al final del timer, no suena.
       audio ??= new AudioContext();
@@ -446,10 +489,25 @@ const totalPantallas = n;
     });
 
     function pintarTimers() {
+      const ahora = Date.now();
+
+      // El número gordo del paso deja de ser la duración y pasa a ser la
+      // cuenta atrás en cuanto arrancas. Es la misma cifra, viva.
+      for (const hueco of raiz!.querySelectorAll<HTMLElement>('[data-duracion-de]')) {
+        const timer = timers.get(hueco.dataset.duracionDe!);
+        if (!timer) {
+          hueco.classList.remove('duracion-viva', 'duracion-fin');
+          continue;
+        }
+        const restante = (timer.finEn - ahora) / 1000;
+        hueco.textContent = restante <= 0 ? '¡ya!' : cuenta(restante);
+        hueco.classList.add('duracion-viva');
+        hueco.classList.toggle('duracion-fin', restante <= 0);
+      }
+
       barra.hidden = timers.size === 0;
       if (timers.size === 0) return;
 
-      const ahora = Date.now();
       barra.replaceChildren();
 
       for (const timer of timers.values()) {
@@ -472,7 +530,7 @@ const totalPantallas = n;
         quitar.textContent = '×';
         quitar.addEventListener('click', () => {
           timers.delete(timer.pasoId);
-          raiz!.querySelector(`[data-arrancar="${timer.pasoId}"]`)?.classList.remove('btn-timer-activo');
+          raiz!.querySelector(`[data-arrancar="${timer.pasoId}"]`)?.classList.remove('btn-play-activo');
           pintarTimers();
           guardar();
         });
@@ -534,6 +592,20 @@ const totalPantallas = n;
 
     window.addEventListener('pagehide', () => wakeLock?.release());
 
+    // ── Tema ────────────────────────────────────────────────────────────────
+    // El oscuro es el que manda: se cocina de noche y con la pantalla cerca de
+    // la cara. El claro está para la cocina a mediodía con sol de frente.
+    raiz.querySelector('[data-tema]')?.addEventListener('click', () => {
+      const claro = document.documentElement.dataset.cocina === 'claro';
+      const nuevo = claro ? 'oscuro' : 'claro';
+      document.documentElement.dataset.cocina = nuevo;
+      try {
+        localStorage.setItem('cocina:tema', nuevo);
+      } catch {
+        // Sin localStorage el tema no se recuerda, pero funciona igual.
+      }
+    });
+
     restaurar();
     mostrar(indice);
     pintarTimers();
@@ -542,87 +614,153 @@ const totalPantallas = n;
 </script>
 
 <style>
-  /* Pensado para un iPhone en la encimera, en vertical, con las manos sucias:
-     una sola columna, tipografía grande y las acciones abajo, que es donde
-     llega el pulgar. */
+  /* ─────────────────────────────────────────────────────────────────────
+     El modo cocina tiene identidad propia y no es un descuido: la web es
+     un recetario que se hojea, y esto es una herramienta que se usa a
+     medio metro, de noche, con las manos ocupadas. Sobre fondo crema, un
+     móvil en la encimera deslumbra.
+
+     Lo que se conserva del resto del sitio es la gramática: bordes
+     gruesos, sombras duras, pasteles planos y la tipografía de píxeles
+     para las cifras. Lo que cambia es el suelo, que pasa a ser oscuro y
+     cálido.
+     ───────────────────────────────────────────────────────────────────── */
+
+  :global(html[data-cocina='oscuro']) {
+    --fondo: #1C1A19;
+    --superficie: #262322;
+    --superficie-alta: #322E2C;
+    --linea: #F4EFE2;
+    --texto: #F4EFE2;
+    --texto-tenue: #A39C90;
+    --sombra: #000000;
+    /* Sobre oscuro los pasteles del sitio dejan de ser fondo y pasan a ser
+       señal: se usan en bloques pequeños y siempre con tinta encima. */
+    --sobre-pastel: #1C1A19;
+  }
+
+  :global(html[data-cocina='claro']) {
+    --fondo: #F9F3E3;
+    --superficie: #FEFDFA;
+    --superficie-alta: #FEFDFA;
+    --linea: #382541;
+    --texto: #382541;
+    --texto-tenue: #6D5C75;
+    --sombra: #382541;
+    --sobre-pastel: #382541;
+  }
+
+  /* El layout pinta el body en crema. Aquí manda el tema, y con más
+     especificidad para que no dependa del orden en que caigan los estilos. */
+  :global(html[data-cocina] body) {
+    background: var(--fondo);
+    color: var(--texto);
+  }
+
   .cocina {
     min-height: 100dvh;
     display: flex;
     flex-direction: column;
-    background: var(--crema);
+    background: var(--fondo);
+    color: var(--texto);
   }
 
+  /* ── Barra superior ────────────────────────────────────── */
   .barra-sup {
-    position: sticky;
-    top: 0;
-    z-index: 3;
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: 1rem;
-    padding: 0.75rem 1rem;
-    background: var(--crema);
-    border-bottom: var(--borde-fino);
+    padding: 0.75rem 1rem 0.5rem;
   }
 
-  .salir {
+  .salir,
+  .tema {
     display: inline-flex;
     align-items: center;
+    justify-content: center;
     gap: 0.4rem;
     min-height: 44px;
-    padding: 0 0.75rem;
+    padding: 0 0.875rem;
     font-family: var(--display);
+    font-size: 0.9375rem;
     font-weight: 700;
+    color: var(--texto);
+    background: none;
+    border: 2px solid var(--linea);
+    border-radius: var(--r-pildora);
     text-decoration: none;
-    color: var(--tinta);
+    cursor: pointer;
   }
 
-  .salir svg { width: 18px; height: 18px; }
+  .tema { min-width: 44px; padding: 0; }
+  .salir svg, .tema svg { width: 17px; height: 17px; }
 
-  .posicion {
-    font-family: var(--pixel);
-    font-size: 0.8125rem;
-    color: var(--tinta-suave);
+  /* Un icono u otro según el tema: se enseña el destino, no el estado. */
+  :global(html[data-cocina='oscuro']) .ico-luna { display: none; }
+  :global(html[data-cocina='claro']) .ico-sol { display: none; }
+
+  /* ── Progreso ──────────────────────────────────────────── */
+  .progreso {
+    display: flex;
+    gap: 4px;
+    padding: 0.5rem 1rem 1rem;
   }
 
+  .segmento {
+    flex: 1;
+    height: 8px;
+    background: var(--superficie-alta);
+    border: 2px solid var(--linea);
+    border-radius: var(--r-pildora);
+  }
+
+  .segmento-hecho { background: var(--menta); }
+  .segmento-actual { background: var(--mantequilla); }
+
+  /* ── Lienzo ────────────────────────────────────────────── */
   .lienzo {
     flex: 1;
     width: 100%;
     max-width: 34rem;
     margin: 0 auto;
-    padding: 1.25rem 1rem 1rem;
+    padding: 0.5rem 1.25rem 1rem;
   }
 
   .sobretitulo {
     font-family: var(--pixel);
-    font-size: 0.75rem;
-    letter-spacing: 0.06em;
+    font-size: 0.6875rem;
+    letter-spacing: 0.08em;
     text-transform: uppercase;
-    color: var(--tinta-suave);
-    margin-bottom: 0.5rem;
+    color: var(--texto-tenue);
+    margin-bottom: 0.75rem;
+    text-align: center;
   }
 
   .titulo-receta,
   .titulo-pantalla {
     font-family: var(--display);
     font-weight: 800;
-    line-height: 1.1;
-    margin-bottom: 1.25rem;
+    line-height: 1.08;
+    letter-spacing: -0.015em;
+    margin-bottom: 1.5rem;
+    text-align: center;
     text-wrap: balance;
   }
 
-  .titulo-receta { font-size: 2rem; }
+  .titulo-receta { font-size: 2.125rem; }
   /* Grande de verdad: esto se lee de pie y a distancia de brazo. */
-  .titulo-pantalla { font-size: 2.25rem; }
+  .titulo-pantalla { font-size: 2.5rem; }
 
+  /* ── Aviso de reposo ───────────────────────────────────── */
   .aviso {
     background: var(--melocoton);
-    color: var(--melocoton-ink);
-    border: var(--borde);
+    color: var(--sobre-pastel);
+    border: 3px solid var(--linea);
     border-radius: var(--r-tarjeta);
-    box-shadow: 6px 6px 0 var(--melocoton-hondo);
+    box-shadow: 5px 5px 0 var(--sombra);
     padding: 1.125rem 1.25rem;
-    margin-bottom: 1.5rem;
+    margin-bottom: 1.75rem;
   }
 
   .aviso-titulo {
@@ -634,12 +772,14 @@ const totalPantallas = n;
 
   .aviso ul { list-style: none; display: grid; gap: 0.35rem; }
 
+  /* ── Bloques del resumen ───────────────────────────────── */
   .bloque {
-    background: var(--blanco);
-    border: var(--borde);
+    background: var(--superficie);
+    border: 3px solid var(--linea);
     border-radius: var(--r-tarjeta);
+    box-shadow: 5px 5px 0 var(--sombra);
     padding: 1.25rem 1.375rem;
-    margin-bottom: 1.25rem;
+    margin-bottom: 1.5rem;
   }
 
   .bloque h2 {
@@ -650,19 +790,20 @@ const totalPantallas = n;
   }
 
   .bloque h3 {
-    font-family: var(--display);
-    font-size: 1rem;
-    font-weight: 700;
-    color: var(--tinta-suave);
-    margin: 1rem 0 0.4rem;
+    font-family: var(--pixel);
+    font-size: 0.75rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--texto-tenue);
+    margin: 1.25rem 0 0.5rem;
   }
 
-  .lista-ing { list-style: none; display: grid; gap: 0.45rem; }
+  .lista-ing { list-style: none; display: grid; gap: 0.5rem; }
 
   .lista-ing li {
     font-size: 1.0625rem;
     line-height: 1.45;
-    padding-left: 1rem;
+    padding-left: 1.125rem;
     position: relative;
   }
 
@@ -670,27 +811,28 @@ const totalPantallas = n;
     content: '';
     position: absolute;
     left: 0;
-    top: 0.6em;
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    background: var(--tinta);
+    top: 0.62em;
+    width: 7px;
+    height: 7px;
+    background: var(--menta);
+    border: 1.5px solid var(--linea);
   }
 
   /* ── Mise en place ─────────────────────────────────────── */
-  .checklist { list-style: none; display: grid; gap: 0.75rem; }
+  .checklist { list-style: none; display: grid; gap: 0.875rem; }
 
   .checklist label {
     display: flex;
     gap: 0.875rem;
     align-items: flex-start;
-    background: var(--blanco);
-    border: var(--borde-fino);
+    /* 44px de zona táctil mínima: se pulsa con el dedo, no con precisión. */
+    min-height: 44px;
+    background: var(--superficie);
+    border: 3px solid var(--linea);
     border-radius: var(--r-caja);
+    box-shadow: 4px 4px 0 var(--sombra);
     padding: 1rem 1.125rem;
     cursor: pointer;
-    /* 44px de zona táctil mínima, que se pulsa con el dedo. */
-    min-height: 44px;
   }
 
   .checklist input {
@@ -705,29 +847,29 @@ const totalPantallas = n;
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 28px;
-    height: 28px;
-    margin-top: 0.15rem;
-    background: var(--blanco);
-    border: var(--borde-fino);
+    width: 30px;
+    height: 30px;
+    margin-top: 0.1rem;
+    background: var(--superficie-alta);
+    border: 2.5px solid var(--linea);
     border-radius: 9px;
     color: transparent;
   }
 
-  .casilla svg { width: 15px; height: 15px; }
+  .casilla svg { width: 16px; height: 16px; }
 
   .checklist input:checked ~ .casilla {
-    background: var(--tinta);
-    color: var(--menta);
+    background: var(--menta);
+    color: var(--sobre-pastel);
   }
 
   .checklist input:checked ~ .checklist-texto {
-    color: var(--tinta-suave);
+    color: var(--texto-tenue);
     text-decoration: line-through;
   }
 
   .checklist input:focus-visible ~ .casilla {
-    outline: 3px solid var(--tinta);
+    outline: 3px solid var(--mantequilla);
     outline-offset: 3px;
   }
 
@@ -737,8 +879,8 @@ const totalPantallas = n;
     display: block;
     font-family: var(--display);
     font-weight: 800;
-    font-size: 1.125rem;
-    margin-bottom: 0.2rem;
+    font-size: 1.1875rem;
+    margin-bottom: 0.25rem;
   }
 
   .checklist-texto :global(p) { font-size: 1rem; line-height: 1.5; }
@@ -747,104 +889,134 @@ const totalPantallas = n;
   .ing-paso {
     display: flex;
     flex-wrap: wrap;
+    justify-content: center;
     gap: 0.4rem;
-    margin-top: 0.6rem;
+    margin-top: 0.75rem;
   }
 
-  .ing-paso-bloque {
-    margin: 0 0 1.25rem;
-    padding: 0.875rem 1rem;
-    background: var(--menta);
-    border: var(--borde-fino);
-    border-radius: var(--r-caja);
-  }
+  .ing-paso-bloque { margin: 0 0 1.5rem; }
 
   .chip-ing {
     display: inline-block;
-    background: var(--blanco);
-    border: 2px solid var(--tinta);
+    background: var(--cielo);
+    color: var(--sobre-pastel);
+    border: 2.5px solid var(--linea);
     border-radius: var(--r-pildora);
-    padding: 0.3rem 0.7rem;
+    padding: 0.3rem 0.75rem;
     font-size: 0.9375rem;
-    font-weight: 600;
+    font-weight: 700;
   }
 
   /* ── Texto del paso ────────────────────────────────────── */
+  .texto-paso { text-align: center; }
+
   .texto-paso :global(p) {
-    font-size: 1.25rem;
+    font-size: 1.1875rem;
     line-height: 1.6;
     margin-bottom: 1rem;
+    color: var(--texto);
     text-wrap: pretty;
   }
 
   .texto-paso :global(strong) {
     font-weight: 800;
-    background: var(--mantequilla);
-    box-shadow: 0 -0.35em 0 0 var(--mantequilla) inset;
+    color: var(--mantequilla);
   }
 
   /* ── Temporizador del paso ─────────────────────────────── */
-  .btn-timer {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-    min-height: 56px;
-    padding: 0 1.5rem;
-    font-family: var(--display);
-    font-size: 1.125rem;
-    font-weight: 800;
-    color: var(--tinta);
-    background: var(--cielo);
-    border: var(--borde);
-    border-radius: var(--r-pildora);
-    box-shadow: 5px 5px 0 var(--cielo-hondo);
+  .zona-timer {
+    display: grid;
+    justify-items: center;
+    gap: 1rem;
+    margin-top: 2rem;
+  }
+
+  /* La cifra manda. Píxeles porque es la voz que el sitio usa para los
+     números, y tabular para que no baile al descontar. */
+  .duracion {
+    font-family: var(--pixel);
+    font-size: 2.75rem;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+    color: var(--texto);
+  }
+
+  .duracion-viva { color: var(--menta); }
+
+  .duracion-fin {
+    color: var(--rosa);
+    animation: latido 1s ease-in-out infinite;
+  }
+
+  .btn-play {
+    display: grid;
+    place-items: center;
+    width: 74px;
+    height: 74px;
+    padding: 0;
+    color: var(--sobre-pastel);
+    background: var(--mantequilla);
+    border: 3px solid var(--linea);
+    border-radius: 50%;
+    box-shadow: 5px 5px 0 var(--sombra);
     cursor: pointer;
   }
 
-  .btn-timer svg { width: 22px; height: 22px; }
+  .btn-play svg { width: 34px; height: 34px; margin-left: 3px; }
 
-  .btn-timer-activo {
-    background: var(--menta);
-    box-shadow: 5px 5px 0 var(--menta-hondo);
-  }
+  .btn-play-activo { background: var(--menta); }
 
+  .btn-play:active { transform: translate(3px, 3px); box-shadow: 2px 2px 0 var(--sombra); }
+
+  /* ── Reposo largo ──────────────────────────────────────── */
   .reposo-largo {
     background: var(--lavanda);
-    color: var(--lavanda-ink);
-    border: var(--borde);
+    color: var(--sobre-pastel);
+    border: 3px solid var(--linea);
     border-radius: var(--r-caja);
-    padding: 1rem 1.125rem;
+    box-shadow: 5px 5px 0 var(--sombra);
+    padding: 1.125rem 1.25rem;
+    margin-top: 2rem;
+    text-align: center;
   }
 
-  .reposo-largo p { margin-bottom: 0.75rem; }
+  .reposo-largo p { margin-bottom: 0.875rem; }
 
   .btn-atajo {
     display: inline-flex;
     align-items: center;
     min-height: 44px;
-    padding: 0 1.125rem;
-    font-weight: 700;
-    color: var(--tinta);
-    background: var(--blanco);
-    border: var(--borde-fino);
+    padding: 0 1.25rem;
+    font-family: var(--display);
+    font-weight: 800;
+    color: var(--sobre-pastel);
+    background: var(--superficie);
+    border: 2.5px solid var(--linea);
     border-radius: var(--r-pildora);
     text-decoration: none;
+    cursor: pointer;
   }
 
   /* ── Final ─────────────────────────────────────────────── */
-  .pendientes {
-    background: var(--rosa);
-    color: var(--rosa-ink);
-    border: var(--borde-fino);
-    border-radius: var(--r-caja);
-    padding: 1rem 1.125rem;
-    margin-bottom: 1.5rem;
+  .pantalla-final { text-align: center; padding-top: 2.5rem; }
+
+  .cierre-texto {
+    font-size: 1.0625rem;
+    margin-bottom: 1.75rem;
+    color: var(--texto-tenue);
   }
 
-  .pendientes p { margin-bottom: 0.75rem; font-weight: 600; }
+  .pendientes {
+    background: var(--rosa);
+    color: var(--sobre-pastel);
+    border: 3px solid var(--linea);
+    border-radius: var(--r-caja);
+    box-shadow: 4px 4px 0 var(--sombra);
+    padding: 1.125rem 1.25rem;
+    margin-bottom: 1.75rem;
+  }
 
-  .pantalla-final { text-align: center; padding-top: 3rem; }
-  .cierre-texto { font-size: 1.0625rem; margin-bottom: 1.75rem; color: var(--tinta-suave); }
+  .pendientes p { margin-bottom: 0.875rem; font-weight: 700; }
 
   .btn-volver {
     display: inline-flex;
@@ -852,12 +1024,13 @@ const totalPantallas = n;
     min-height: 56px;
     padding: 0 1.75rem;
     font-family: var(--display);
+    font-size: 1.0625rem;
     font-weight: 800;
-    color: var(--tinta);
+    color: var(--sobre-pastel);
     background: var(--menta);
-    border: var(--borde);
+    border: 3px solid var(--linea);
     border-radius: var(--r-pildora);
-    box-shadow: 5px 5px 0 var(--menta-hondo);
+    box-shadow: 5px 5px 0 var(--sombra);
     text-decoration: none;
   }
 
@@ -868,22 +1041,24 @@ const totalPantallas = n;
     z-index: 2;
     display: grid;
     gap: 0.5rem;
-    padding: 0.75rem 1rem;
-    background: var(--crema);
-    border-top: var(--borde-fino);
+    padding: 0.75rem 1rem 0.25rem;
+    background: var(--fondo);
   }
 
-  .timer {
+  /* Estas filas las crea el JavaScript, así que no llevan el atributo de
+     scope de Astro y el CSS con scope no las alcanza. Van en :global,
+     colgando de `.timers`, que sí es del template. */
+  .timers :global(.timer) {
     display: flex;
     align-items: stretch;
-    gap: 0.5rem;
     background: var(--cielo);
-    border: var(--borde-fino);
+    color: var(--sobre-pastel);
+    border: 3px solid var(--linea);
     border-radius: var(--r-pildora);
     overflow: hidden;
   }
 
-  .timer-ir {
+  .timers :global(.timer-ir) {
     flex: 1;
     display: flex;
     align-items: center;
@@ -894,46 +1069,44 @@ const totalPantallas = n;
     background: none;
     border: none;
     font: inherit;
-    color: var(--tinta);
+    color: inherit;
     cursor: pointer;
     text-align: left;
   }
 
-  .timer-etiqueta {
-    font-weight: 700;
+  .timers :global(.timer-etiqueta) {
+    font-family: var(--display);
+    font-weight: 800;
     font-size: 0.9375rem;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
   }
 
-  .timer-cuenta {
+  .timers :global(.timer-cuenta) {
     font-family: var(--pixel);
-    font-size: 1.0625rem;
+    font-size: 1rem;
     font-variant-numeric: tabular-nums;
   }
 
-  .timer-quitar {
+  .timers :global(.timer-quitar) {
     flex: 0 0 auto;
     width: 48px;
     background: none;
     border: none;
-    border-left: var(--borde-fino);
+    border-left: 3px solid var(--linea);
     font-size: 1.5rem;
     line-height: 1;
-    color: var(--tinta);
+    color: inherit;
     cursor: pointer;
   }
 
   /* Que se termine un timer no puede bloquear la cocina: avisa fuerte pero
      no tapa nada ni pide que lo cierres. */
-  .timer-fin {
-    background: var(--rosa);
-    animation: latido 1s ease-in-out infinite;
-  }
+  .timers :global(.timer-fin) { background: var(--rosa); animation: latido 1s ease-in-out infinite; }
 
   @keyframes latido {
-    50% { box-shadow: 0 0 0 5px var(--rosa-hondo); }
+    50% { opacity: 0.45; }
   }
 
   /* ── Navegación ────────────────────────────────────────── */
@@ -942,42 +1115,67 @@ const totalPantallas = n;
     bottom: 0;
     z-index: 2;
     display: flex;
+    align-items: center;
+    justify-content: space-between;
     gap: 0.75rem;
-    padding: 0.75rem 1rem calc(0.75rem + env(safe-area-inset-bottom));
-    background: var(--crema);
-    border-top: var(--borde-fino);
+    padding: 0.75rem 1.25rem calc(1rem + env(safe-area-inset-bottom));
+    background: var(--fondo);
   }
 
-  .nav-btn {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.4rem;
-    /* Grandes: se pulsan sin mirar y con el dedo torpe. */
-    min-height: 60px;
-    padding: 0 1.25rem;
-    font-family: var(--display);
-    font-size: 1.0625rem;
-    font-weight: 800;
-    color: var(--tinta);
-    background: var(--blanco);
-    border: var(--borde);
-    border-radius: var(--r-pildora);
+  .nav-cuenta {
+    font-family: var(--pixel);
+    font-size: 0.8125rem;
+    color: var(--texto-tenue);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .nav-circ {
+    display: grid;
+    place-items: center;
+    /* 60px: se pulsa sin mirar y con el dedo torpe. */
+    width: 60px;
+    height: 60px;
+    padding: 0;
+    color: var(--texto);
+    background: var(--superficie);
+    border: 3px solid var(--linea);
+    border-radius: 50%;
     cursor: pointer;
   }
 
-  .nav-btn svg { width: 20px; height: 20px; }
+  .nav-circ svg { width: 24px; height: 24px; }
 
-  .nav-btn-principal {
-    flex: 1;
+  .nav-avanza {
+    color: var(--sobre-pastel);
     background: var(--mantequilla);
-    box-shadow: 5px 5px 0 var(--mantequilla-hondo);
+    box-shadow: 4px 4px 0 var(--sombra);
   }
 
-  .nav-btn:active { transform: translate(2px, 2px); }
+  .nav-circ:active { transform: translate(2px, 2px); box-shadow: none; }
+
+  .nav-empezar { display: none; }
+
+  /* En el resumen no hay «siguiente»: hay «empezar», y ocupa todo el ancho
+     porque es la única cosa que se puede hacer en esa pantalla. */
+  .navegacion-inicio { justify-content: stretch; }
+
+  .navegacion-inicio .nav-avanza {
+    flex: 1;
+    width: auto;
+    gap: 0.5rem;
+    border-radius: var(--r-pildora);
+    font-family: var(--display);
+    font-size: 1.125rem;
+    font-weight: 800;
+    grid-auto-flow: column;
+  }
+
+  .navegacion-inicio .nav-empezar { display: inline; }
 
   @media (prefers-reduced-motion: reduce) {
-    .timer-fin { animation: none; border-width: 4px; }
-    .nav-btn:active { transform: none; }
+    .timers :global(.timer-fin),
+    .duracion-fin { animation: none; }
+    .nav-circ:active,
+    .btn-play:active { transform: none; }
   }
 </style>
