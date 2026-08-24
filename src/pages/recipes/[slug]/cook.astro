@@ -956,12 +956,16 @@ const totalPantallas = n;
     margin-top: 2rem;
   }
 
-  /* La cifra manda. Píxeles porque es la voz que el sitio usa para los
-     números, y tabular para que no baile al descontar. */
+  /* La cifra manda, y por eso va en la de titulares. El píxel en el resto
+     del sitio no pasa de 0.75rem —es voz de etiqueta, no de número grande—
+     y a este tamaño se lee peor de lo que decora. Tabular para que no baile
+     al descontar. */
   .duracion {
-    font-family: var(--pixel);
-    font-size: 2.75rem;
+    font-family: var(--display);
+    font-size: 3.25rem;
+    font-weight: 800;
     line-height: 1;
+    letter-spacing: -0.02em;
     font-variant-numeric: tabular-nums;
     color: var(--texto);
   }
@@ -1109,8 +1113,9 @@ const totalPantallas = n;
   }
 
   .timers :global(.timer-cuenta) {
-    font-family: var(--pixel);
-    font-size: 1rem;
+    font-family: var(--display);
+    font-weight: 800;
+    font-size: 1.0625rem;
     font-variant-numeric: tabular-nums;
   }
 
@@ -1149,7 +1154,7 @@ const totalPantallas = n;
 
   .nav-cuenta {
     font-family: var(--pixel);
-    font-size: 0.8125rem;
+    font-size: 0.75rem;
     color: var(--texto-tenue);
     font-variant-numeric: tabular-nums;
   }
