@@ -54,7 +54,7 @@ const totalPantallas = n;
   {/* Antes de pintar nada: si esperamos al script del final, el modo oscuro
       entra con un fogonazo crema. Va inline y va aquí a propósito. */}
   <script is:inline>
-    document.documentElement.dataset.cocina =
+    document.documentElement.dataset.temaCocina =
       localStorage.getItem('cocina:tema') === 'claro' ? 'claro' : 'oscuro';
   </script>
 
@@ -260,7 +260,9 @@ const totalPantallas = n;
 </Layout>
 
 <script>
-  const raiz = document.querySelector<HTMLElement>('[data-cocina]');
+  import { cuentaAtras, textoPosicion, timersACaducar } from '../../../lib/cocina.ts';
+
+  const raiz = document.querySelector<HTMLElement>('div[data-cocina]');
   if (raiz) {
     const total = Number(raiz.dataset.total);
     const pantallas = Array.from(raiz.querySelectorAll<HTMLElement>('[data-pantalla]'));
@@ -333,12 +335,9 @@ const totalPantallas = n;
      * caso del horno del ramen.
      */
     function limpiarTerminados() {
-      const ahora = Date.now();
-      for (const timer of [...timers.values()]) {
-        if (timer.finEn <= ahora && timer.pantalla < indice) {
-          timers.delete(timer.pasoId);
-          raiz!.querySelector(`[data-arrancar="${timer.pasoId}"]`)?.classList.remove('btn-play-activo');
-        }
+      for (const pasoId of timersACaducar(timers.values(), indice, Date.now())) {
+        timers.delete(pasoId);
+        raiz!.querySelector(`[data-arrancar="${pasoId}"]`)?.classList.remove('btn-play-activo');
       }
     }
 
@@ -353,10 +352,7 @@ const totalPantallas = n;
 
       // El resumen y el final no cuentan como pasos: «1 de 6» tiene que
       // coincidir con lo que ve el que cocina, no con el array.
-      const pasos = total - 2;
-      const enPaso = indice >= 1 && indice <= pasos;
-
-      posicion.textContent = enPaso ? `${indice} de ${pasos}` : '';
+      posicion.textContent = textoPosicion(indice, total);
       btnAnterior.hidden = indice === 0;
       btnSiguiente.hidden = indice === total - 1;
       nav?.classList.toggle('navegacion-inicio', indice === 0);
@@ -451,15 +447,6 @@ const totalPantallas = n;
     }
 
     // ── Temporizadores ──────────────────────────────────────────────────────
-    function cuenta(segundos: number): string {
-      const s = Math.max(0, Math.round(segundos));
-      const h = Math.floor(s / 3600);
-      const m = Math.floor((s % 3600) / 60);
-      const seg = s % 60;
-      const dosCifras = (n: number) => String(n).padStart(2, '0');
-      return h > 0 ? `${h}:${dosCifras(m)}:${dosCifras(seg)}` : `${m}:${dosCifras(seg)}`;
-    }
-
     function arrancar(boton: HTMLElement) {
       const pasoId = boton.dataset.arrancar!;
       const segundos = Number(boton.dataset.segundos);
@@ -500,7 +487,7 @@ const totalPantallas = n;
           continue;
         }
         const restante = (timer.finEn - ahora) / 1000;
-        hueco.textContent = restante <= 0 ? '¡ya!' : cuenta(restante);
+        hueco.textContent = restante <= 0 ? '¡ya!' : cuentaAtras(restante);
         hueco.classList.add('duracion-viva');
         hueco.classList.toggle('duracion-fin', restante <= 0);
       }
@@ -520,7 +507,7 @@ const totalPantallas = n;
         const ir = document.createElement('button');
         ir.type = 'button';
         ir.className = 'timer-ir';
-        ir.innerHTML = `<span class="timer-etiqueta">${timer.etiqueta}</span><span class="timer-cuenta">${terminado ? '¡ya!' : cuenta(restante)}</span>`;
+        ir.innerHTML = `<span class="timer-etiqueta">${timer.etiqueta}</span><span class="timer-cuenta">${terminado ? '¡ya!' : cuentaAtras(restante)}</span>`;
         ir.addEventListener('click', () => mostrar(timer.pantalla));
 
         const quitar = document.createElement('button');
@@ -596,9 +583,9 @@ const totalPantallas = n;
     // El oscuro es el que manda: se cocina de noche y con la pantalla cerca de
     // la cara. El claro está para la cocina a mediodía con sol de frente.
     raiz.querySelector('[data-tema]')?.addEventListener('click', () => {
-      const claro = document.documentElement.dataset.cocina === 'claro';
+      const claro = document.documentElement.dataset.temaCocina === 'claro';
       const nuevo = claro ? 'oscuro' : 'claro';
-      document.documentElement.dataset.cocina = nuevo;
+      document.documentElement.dataset.temaCocina = nuevo;
       try {
         localStorage.setItem('cocina:tema', nuevo);
       } catch {
@@ -626,7 +613,7 @@ const totalPantallas = n;
      cálido.
      ───────────────────────────────────────────────────────────────────── */
 
-  :global(html[data-cocina='oscuro']) {
+  :global(html[data-tema-cocina='oscuro']) {
     --fondo: #1C1A19;
     --superficie: #262322;
     --superficie-alta: #322E2C;
@@ -639,7 +626,7 @@ const totalPantallas = n;
     --sobre-pastel: #1C1A19;
   }
 
-  :global(html[data-cocina='claro']) {
+  :global(html[data-tema-cocina='claro']) {
     --fondo: #F9F3E3;
     --superficie: #FEFDFA;
     --superficie-alta: #FEFDFA;
@@ -652,7 +639,7 @@ const totalPantallas = n;
 
   /* El layout pinta el body en crema. Aquí manda el tema, y con más
      especificidad para que no dependa del orden en que caigan los estilos. */
-  :global(html[data-cocina] body) {
+  :global(html[data-tema-cocina] body) {
     background: var(--fondo);
     color: var(--texto);
   }
@@ -697,8 +684,8 @@ const totalPantallas = n;
   .salir svg, .tema svg { width: 17px; height: 17px; }
 
   /* Un icono u otro según el tema: se enseña el destino, no el estado. */
-  :global(html[data-cocina='oscuro']) .ico-luna { display: none; }
-  :global(html[data-cocina='claro']) .ico-sol { display: none; }
+  :global(html[data-tema-cocina='oscuro']) .ico-luna { display: none; }
+  :global(html[data-tema-cocina='claro']) .ico-sol { display: none; }
 
   /* ── Progreso ──────────────────────────────────────────── */
   .progreso {
