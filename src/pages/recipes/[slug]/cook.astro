@@ -60,14 +60,10 @@ const totalPantallas = n;
 
   <div class="cocina" data-cocina data-total={totalPantallas}>
     <header class="barra-sup">
-      <a href={rutaReceta} class="salir" data-salir>
-        <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true">
-          <path d="M6 6l8 8M14 6l-8 8"/>
-        </svg>
-        salir
-      </a>
+      <span class="titulo-mini" data-titulo-mini>{receta.title}</span>
+
       <div class="barra-der">
-        <button type="button" class="tema" data-tema aria-label="Cambiar entre claro y oscuro">
+        <button type="button" class="icono-btn" data-tema aria-label="Cambiar entre claro y oscuro">
           <svg class="ico-luna" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <path d="M16.5 12.4A7 7 0 0 1 7.6 3.5a7 7 0 1 0 8.9 8.9z"/>
           </svg>
@@ -76,12 +72,18 @@ const totalPantallas = n;
             <path d="M10 2v1.6M10 16.4V18M18 10h-1.6M3.6 10H2M15.7 4.3l-1.1 1.1M5.4 14.6l-1.1 1.1M15.7 15.7l-1.1-1.1M5.4 5.4L4.3 4.3"/>
           </svg>
         </button>
+
+        <a href={rutaReceta} class="icono-btn" aria-label="Salir del modo cocina">
+          <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true">
+            <path d="M6 6l8 8M14 6l-8 8"/>
+          </svg>
+        </a>
       </div>
     </header>
 
     {/* Cuántos pasos quedan, de un vistazo y sin leer. Un segmento por
         pantalla de cocinado — ni el resumen ni el final cuentan. */}
-    <div class="progreso" aria-hidden="true">
+    <div class="progreso" data-progreso aria-hidden="true">
       {Array.from({ length: totalPantallas - 2 }).map((_, i) => (
         <span class="segmento" data-segmento={i + 1}></span>
       ))}
@@ -89,10 +91,8 @@ const totalPantallas = n;
 
     <main class="lienzo">
       {/* ── Resumen ─────────────────────────────────────────── */}
-      <section class="pantalla" data-pantalla={pantallaResumen}>
-        <p class="sobretitulo">Vas a cocinar</p>
+      <section class="pantalla pantalla-resumen" data-pantalla={pantallaResumen}>
         <h1 class="titulo-receta">{receta.title}</h1>
-
         {reposos.length > 0 && (
           <div class="aviso">
             <p class="aviso-titulo">Esto no se hace del tirón</p>
@@ -103,6 +103,13 @@ const totalPantallas = n;
             </ul>
           </div>
         )}
+
+        <p class="descripcion">{receta.description}</p>
+        <p class="cuantos-pasos">{totalPantallas - 2} pasos</p>
+
+        <div class="zona-empezar">
+          <button type="button" class="btn-empezar" data-empezar>Empezar</button>
+        </div>
 
         <div class="bloque">
           <h2>Ingredientes</h2>
@@ -129,7 +136,6 @@ const totalPantallas = n;
       {/* ── Mise en place ───────────────────────────────────── */}
       {pantallaPrep !== null && (
         <section class="pantalla" data-pantalla={pantallaPrep} hidden>
-          <p class="sobretitulo">Antes de encender el fuego</p>
           <h2 class="titulo-pantalla">Preparación</h2>
 
           <ul class="checklist">
@@ -167,7 +173,6 @@ const totalPantallas = n;
 
         return (
           <section class="pantalla" data-pantalla={pantallasEjecucion[i]} hidden>
-            <p class="sobretitulo">Paso {i + 1} de {ejecucion.length}</p>
             <h2 class="titulo-pantalla">{paso.title}</h2>
 
             {ingredientes.length > 0 && (
@@ -222,7 +227,6 @@ const totalPantallas = n;
 
       {/* ── Final ───────────────────────────────────────────── */}
       <section class="pantalla pantalla-final" data-pantalla={pantallaFinal} hidden>
-        <p class="sobretitulo">Listo</p>
         <h2 class="titulo-pantalla">A comer</h2>
         <p class="cierre-texto">Si sobra, ya sabes dónde están las notas de conservación.</p>
 
@@ -250,7 +254,6 @@ const totalPantallas = n;
       <span class="nav-cuenta" data-posicion aria-live="polite"></span>
 
       <button type="button" class="nav-circ nav-avanza" data-siguiente>
-        <span class="nav-empezar" data-etiqueta-siguiente>Empezar</span>
         <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
           <path d="M8 4.5L13.5 10 8 15.5"/>
         </svg>
@@ -271,6 +274,8 @@ const totalPantallas = n;
     const btnAnterior = raiz.querySelector<HTMLButtonElement>('[data-anterior]')!;
     const btnSiguiente = raiz.querySelector<HTMLButtonElement>('[data-siguiente]')!;
     const nav = raiz.querySelector<HTMLElement>('[data-nav]');
+    const progreso = raiz.querySelector<HTMLElement>('[data-progreso]');
+    const tituloMini = raiz.querySelector<HTMLElement>('[data-titulo-mini]');
     const segmentos = Array.from(raiz.querySelectorAll<HTMLElement>('[data-segmento]'));
 
     const CLAVE = `cocina:${location.pathname}`;
@@ -353,9 +358,19 @@ const totalPantallas = n;
       // El resumen y el final no cuentan como pasos: «1 de 6» tiene que
       // coincidir con lo que ve el que cocina, no con el array.
       posicion.textContent = textoPosicion(indice, total);
-      btnAnterior.hidden = indice === 0;
+
+      // El resumen no tiene navegación, ni progreso, ni título de cabecera:
+      // lo único que se puede hacer ahí es empezar, y ese botón vive dentro
+      // de la propia pantalla.
+      const enResumen = indice === 0;
+      if (nav) nav.hidden = enResumen;
+      if (progreso) progreso.hidden = enResumen;
+      if (tituloMini) tituloMini.hidden = enResumen;
+
+      // Apagado en vez de escondido, como en la referencia: el sitio del
+      // botón no se mueve al avanzar.
+      btnAnterior.disabled = indice <= 1;
       btnSiguiente.hidden = indice === total - 1;
-      nav?.classList.toggle('navegacion-inicio', indice === 0);
 
       segmentos.forEach(seg => {
         const n = Number(seg.dataset.segmento);
@@ -582,6 +597,8 @@ const totalPantallas = n;
     // ── Tema ────────────────────────────────────────────────────────────────
     // El oscuro es el que manda: se cocina de noche y con la pantalla cerca de
     // la cara. El claro está para la cocina a mediodía con sol de frente.
+    raiz.querySelector('[data-empezar]')?.addEventListener('click', () => mostrar(1));
+
     raiz.querySelector('[data-tema]')?.addEventListener('click', () => {
       const claro = document.documentElement.dataset.temaCocina === 'claro';
       const nuevo = claro ? 'oscuro' : 'claro';
@@ -661,27 +678,36 @@ const totalPantallas = n;
     padding: 0.75rem 1rem 0.5rem;
   }
 
-  .salir,
-  .tema {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.4rem;
-    min-height: 44px;
-    padding: 0 0.875rem;
-    font-family: var(--display);
-    font-size: 0.9375rem;
-    font-weight: 700;
-    color: var(--texto);
+  /* Iconos sin marco: en una pantalla que ya tiene bordes gruesos por todas
+     partes, dos pastillas más arriba solo hacen ruido. */
+  .icono-btn {
+    display: grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    color: var(--texto-tenue);
     background: none;
-    border: 2px solid var(--linea);
-    border-radius: var(--r-pildora);
+    border: none;
+    border-radius: 50%;
     text-decoration: none;
     cursor: pointer;
   }
 
-  .tema { min-width: 44px; padding: 0; }
-  .salir svg, .tema svg { width: 17px; height: 17px; }
+  .icono-btn svg { width: 19px; height: 19px; }
+
+  .titulo-mini {
+    flex: 1;
+    min-width: 0;
+    padding-left: 0.5rem;
+    font-family: var(--display);
+    font-size: 0.9375rem;
+    font-weight: 700;
+    color: var(--texto-tenue);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
 
   /* Un icono u otro según el tema: se enseña el destino, no el estado. */
   :global(html[data-tema-cocina='oscuro']) .ico-luna { display: none; }
@@ -696,9 +722,8 @@ const totalPantallas = n;
 
   .segmento {
     flex: 1;
-    height: 8px;
+    height: 4px;
     background: var(--superficie-alta);
-    border: 2px solid var(--linea);
     border-radius: var(--r-pildora);
   }
 
@@ -708,21 +733,25 @@ const totalPantallas = n;
   /* ── Lienzo ────────────────────────────────────────────── */
   .lienzo {
     flex: 1;
+    display: flex;
+    flex-direction: column;
     width: 100%;
     max-width: 34rem;
     margin: 0 auto;
-    padding: 0.5rem 1.25rem 1rem;
+    padding: 0.5rem 1.5rem 1rem;
   }
 
-  .sobretitulo {
-    font-family: var(--pixel);
-    font-size: 0.6875rem;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: var(--texto-tenue);
-    margin-bottom: 0.75rem;
-    text-align: center;
+  /* El paso ocupa la pantalla y se centra: la referencia deja mucho aire
+     arriba y abajo, y es lo que hace que se lea de un vistazo. */
+  .pantalla:not([hidden]) {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
   }
+
+  /* El resumen es una lista larga: ahí el centrado estorba. */
+  .pantalla-resumen:not([hidden]) { justify-content: flex-start; padding-top: 1rem; }
 
   .titulo-receta,
   .titulo-pantalla {
@@ -735,7 +764,43 @@ const totalPantallas = n;
     text-wrap: balance;
   }
 
-  .titulo-receta { font-size: 2.125rem; }
+  .titulo-receta { font-size: 2.125rem; margin-bottom: 1rem; }
+
+  .descripcion {
+    font-size: 1.0625rem;
+    line-height: 1.55;
+    color: var(--texto-tenue);
+    text-align: center;
+    margin-bottom: 1.25rem;
+    text-wrap: pretty;
+  }
+
+  .cuantos-pasos {
+    font-family: var(--pixel);
+    font-size: 0.6875rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--texto-tenue);
+    text-align: center;
+  }
+
+  .zona-empezar { display: grid; justify-items: center; margin: 1.75rem 0 2.5rem; }
+
+  .btn-empezar {
+    min-height: 60px;
+    padding: 0 2.5rem;
+    font-family: var(--display);
+    font-size: 1.1875rem;
+    font-weight: 800;
+    color: var(--sobre-pastel);
+    background: var(--mantequilla);
+    border: 3px solid var(--linea);
+    border-radius: var(--r-pildora);
+    box-shadow: 5px 5px 0 var(--sombra);
+    cursor: pointer;
+  }
+
+  .btn-empezar:active { transform: translate(3px, 3px); box-shadow: 2px 2px 0 var(--sombra); }
   /* Grande de verdad: esto se lee de pie y a distancia de brazo. */
   .titulo-pantalla { font-size: 2.5rem; }
 
@@ -883,15 +948,17 @@ const totalPantallas = n;
 
   .ing-paso-bloque { margin: 0 0 1.5rem; }
 
+  /* Los ingredientes del paso importan, pero no son el paso. En pastel
+     macizo competían con el título y con la cifra; en voz baja acompañan. */
   .chip-ing {
     display: inline-block;
-    background: var(--cielo);
-    color: var(--sobre-pastel);
-    border: 2.5px solid var(--linea);
+    color: var(--texto-tenue);
+    background: none;
+    border: 1.5px solid var(--texto-tenue);
     border-radius: var(--r-pildora);
-    padding: 0.3rem 0.75rem;
-    font-size: 0.9375rem;
-    font-weight: 700;
+    padding: 0.2rem 0.625rem;
+    font-size: 0.8125rem;
+    font-weight: 600;
   }
 
   /* ── Texto del paso ────────────────────────────────────── */
@@ -1140,24 +1207,8 @@ const totalPantallas = n;
 
   .nav-circ:active { transform: translate(2px, 2px); box-shadow: none; }
 
-  .nav-empezar { display: none; }
-
-  /* En el resumen no hay «siguiente»: hay «empezar», y ocupa todo el ancho
-     porque es la única cosa que se puede hacer en esa pantalla. */
-  .navegacion-inicio { justify-content: stretch; }
-
-  .navegacion-inicio .nav-avanza {
-    flex: 1;
-    width: auto;
-    gap: 0.5rem;
-    border-radius: var(--r-pildora);
-    font-family: var(--display);
-    font-size: 1.125rem;
-    font-weight: 800;
-    grid-auto-flow: column;
-  }
-
-  .navegacion-inicio .nav-empezar { display: inline; }
+  .nav-circ:disabled { opacity: 0.3; cursor: default; }
+  .nav-circ:disabled:active { transform: none; }
 
   @media (prefers-reduced-motion: reduce) {
     .timers :global(.timer-fin),
