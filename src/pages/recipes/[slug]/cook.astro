@@ -58,11 +58,37 @@ const totalPantallas = n;
       localStorage.getItem('cocina:tema') === 'claro' ? 'claro' : 'oscuro';
   </script>
 
-  <div class="cocina" data-cocina data-total={totalPantallas}>
+  {/* Arranca en «no»: así los ingredientes no asoman durante un fotograma
+      antes de que el script los esconda. */}
+  <div class="cocina" data-cocina data-total={totalPantallas} data-ver-ing="no">
     <header class="barra-sup">
       <span class="titulo-mini" data-titulo-mini>{receta.title}</span>
 
       <div class="barra-der">
+        {/* Los ingredientes del paso se deducen del texto casi siempre
+            («devolver el pollo a la sartén»), así que por defecto estorban.
+            El ojo está para cuando lo que hace falta es la cantidad exacta.
+            Vive en la barra y no en cada paso porque es una preferencia: la
+            enciendes una vez y vale para toda la receta. */}
+        <button
+          type="button"
+          class="icono-btn"
+          data-ojo
+          aria-pressed="false"
+          aria-label="Mostrar los ingredientes de cada paso"
+        >
+          <svg class="ico-ojo" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M1.8 10S4.9 4.5 10 4.5 18.2 10 18.2 10 15.1 15.5 10 15.5 1.8 10 1.8 10z"/>
+            <circle cx="10" cy="10" r="2.6"/>
+          </svg>
+          <svg class="ico-ojo-no" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M4.2 5.7C2.6 7.1 1.8 10 1.8 10s3.1 5.5 8.2 5.5c1.3 0 2.5-.4 3.6-.9"/>
+            <path d="M7.7 4.8c.7-.2 1.5-.3 2.3-.3 5.1 0 8.2 5.5 8.2 5.5s-.9 1.6-2.5 3"/>
+            <path d="M8.2 8.2a2.6 2.6 0 0 0 3.6 3.6"/>
+            <path d="M3.2 3.2l13.6 13.6"/>
+          </svg>
+        </button>
+
         <button type="button" class="icono-btn" data-tema aria-label="Cambiar entre claro y oscuro">
           <svg class="ico-luna" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <path d="M16.5 12.4A7 7 0 0 1 7.6 3.5a7 7 0 1 0 8.9 8.9z"/>
@@ -365,6 +391,7 @@ const totalPantallas = n;
       if (nav) nav.hidden = enResumen;
       if (progreso) progreso.hidden = enResumen;
       if (tituloMini) tituloMini.hidden = enResumen;
+      if (ojo) ojo.hidden = enResumen || indice === total - 1;
 
       // Apagado en vez de escondido, como en la referencia: el sitio del
       // botón no se mueve al avanzar.
@@ -596,6 +623,35 @@ const totalPantallas = n;
     // ── Tema ────────────────────────────────────────────────────────────────
     // El oscuro es el que manda: se cocina de noche y con la pantalla cerca de
     // la cara. El claro está para la cocina a mediodía con sol de frente.
+    // ── Ingredientes del paso ───────────────────────────────────────────────
+    // Preferencia, no estado de sesión: si te gusta verlos, te gusta siempre.
+    const ojo = raiz.querySelector<HTMLButtonElement>('[data-ojo]');
+
+    function pintarOjo(ver: boolean) {
+      raiz!.dataset.verIng = ver ? 'si' : 'no';
+      ojo?.setAttribute('aria-pressed', String(ver));
+      ojo?.setAttribute(
+        'aria-label',
+        ver ? 'Ocultar los ingredientes de cada paso' : 'Mostrar los ingredientes de cada paso',
+      );
+    }
+
+    try {
+      if (localStorage.getItem('cocina:ingredientes') === 'si') pintarOjo(true);
+    } catch {
+      // Sin localStorage se quedan ocultos, que es el valor por defecto.
+    }
+
+    ojo?.addEventListener('click', () => {
+      const ver = raiz!.dataset.verIng !== 'si';
+      pintarOjo(ver);
+      try {
+        localStorage.setItem('cocina:ingredientes', ver ? 'si' : 'no');
+      } catch {
+        // Que no se recuerde no impide que funcione ahora.
+      }
+    });
+
     raiz.querySelector('[data-empezar]')?.addEventListener('click', () => mostrar(1));
 
     raiz.querySelector('[data-tema]')?.addEventListener('click', () => {
@@ -707,6 +763,14 @@ const totalPantallas = n;
     text-overflow: ellipsis;
     white-space: nowrap;
   }
+
+  /* Los ingredientes del paso, escondidos salvo que pidas verlos. */
+  .cocina[data-ver-ing='no'] .ing-paso-bloque { display: none; }
+
+  .cocina[data-ver-ing='no'] .ico-ojo-no,
+  .cocina[data-ver-ing='si'] .ico-ojo { display: none; }
+
+  .cocina[data-ver-ing='si'] [data-ojo] { color: var(--texto); }
 
   /* Un icono u otro según el tema: se enseña el destino, no el estado. */
   :global(html[data-tema-cocina='oscuro']) .ico-luna { display: none; }
