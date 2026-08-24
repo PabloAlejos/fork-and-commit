@@ -154,6 +154,17 @@ No hay herramienta de migraciones.
 - [ ] **2.7** `src/generation/prompts.py` y el skill `recipe-generator`: enseñar
       al modelo a asignar ids estables, clasificar cada paso en
       `prep`/`rest`/`cook`/`plate` y poner `timer` en segundos.
+- [ ] **2.7b** Regla editorial para los pasos `prep`: **una línea, y solo si
+      dicen algo que `prep` no puede decir.** Hoy el `p1` del ramen es la
+      concatenación literal del `prep` de sus cuatro ingredientes («cortadas
+      por la mitad», «en trozos grandes»…): 169 caracteres para repetir un
+      dato que ya está. El porqué del corte («así se dorarán en vez de
+      vaporizarse») es color editorial y va a `notes`, no a la encimera.
+
+      Con esa regla la mise en place se podría **derivar de los ingredientes
+      que llevan `prep`**, y los pasos `prep` quedarían solo para técnica de
+      verdad (prensar el tofu). Merece la pena valorarlo al tocar el
+      generador; no antes, porque cambia el significado del schema.
 - [ ] **2.8** Tests de renderizado del markdown. Lo pide el CLAUDE.md del back
       para cualquier cambio aquí, y este los cambia todos.
 

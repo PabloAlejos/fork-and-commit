@@ -133,6 +133,17 @@ describe('textoIngrediente', () => {
     );
   });
 
+  it('sin prep cuando el corte ya lo dice el paso', () => {
+    const ajo = ing({ amount: 2, unit: null, name: 'dientes de ajo', prep: 'laminados finos' });
+    assert.equal(textoIngrediente(ajo, { conPrep: false }), '2 dientes de ajo');
+    // La nota no es el corte: esa se queda.
+    const garbanzos = ing({ amount: 200, unit: 'g', name: 'garbanzos cocidos', note: 'bote escurrido' });
+    assert.equal(
+      textoIngrediente(garbanzos, { conPrep: false }),
+      '200 g de garbanzos cocidos (bote escurrido)',
+    );
+  });
+
   it('opcional al final', () => {
     assert.equal(
       textoIngrediente(

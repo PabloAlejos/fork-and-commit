@@ -137,14 +137,21 @@ export function formatearCantidad(ingrediente: Ingrediente): string {
  * El «de» solo aparece cuando hay unidad: «150 g **de** pechuga» pero «2
  * dientes de ajo», porque ahí el «de» ya viene dentro del nombre.
  */
-export function textoIngrediente(ingrediente: Ingrediente): string {
+export function textoIngrediente(
+  ingrediente: Ingrediente,
+  opciones: { conPrep?: boolean } = {},
+): string {
+  const { conPrep = true } = opciones;
   const cantidad = formatearCantidad(ingrediente);
 
   let texto = cantidad
     ? `${cantidad}${ingrediente.unit ? ' de' : ''} ${ingrediente.name}`
     : mayuscula(ingrediente.name);
 
-  if (ingrediente.prep) texto += `, ${ingrediente.prep}`;
+  // En la mise en place el corte ya lo dice el paso —«Laminar el ajo»—, así
+  // que repetirlo en el ingrediente sobra: «2 dientes de ajo», no «2 dientes
+  // de ajo, laminados finos».
+  if (conPrep && ingrediente.prep) texto += `, ${ingrediente.prep}`;
   if (ingrediente.note) texto += ` (${ingrediente.note})`;
   if (ingrediente.optional) texto += ' — opcional';
 
