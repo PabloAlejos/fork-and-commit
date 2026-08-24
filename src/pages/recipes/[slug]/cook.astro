@@ -111,26 +111,15 @@ const totalPantallas = n;
           <button type="button" class="btn-empezar" data-empezar>Empezar</button>
         </div>
 
-        <div class="bloque">
-          <h2>Ingredientes</h2>
-          {receta.ingredients.map(grupo => (
-            <>
-              {grupo.group && <h3>{grupo.group}</h3>}
-              <ul class="lista-ing">
-                {grupo.items.map(item => <li>{textoIngrediente(item)}</li>)}
-              </ul>
-            </>
-          ))}
-        </div>
+        {/* Aquí iban la lista de ingredientes y la de utensilios, que es lo
+            que pide la §5.1 de la especificación. Se quitan a propósito: a
+            esta pantalla se llega desde la receta, donde acabas de leer las
+            dos y de repasar la lista de la compra. Repetirlas convierte la
+            pantalla de arranque en algo que hay que desplazar antes de poder
+            empezar.
 
-        {receta.utensils.length > 0 && (
-          <div class="bloque bloque-utensilios">
-            <h2>Utensilios</h2>
-            <ul class="lista-ing">
-              {receta.utensils.map(u => <li>{u}</li>)}
-            </ul>
-          </div>
-        )}
+            Lo que sí hace falta mientras cocinas —qué lleva este paso— viaja
+            con cada paso, en sus propios ingredientes. */}
       </section>
 
       {/* ── Mise en place ───────────────────────────────────── */}
@@ -748,10 +737,11 @@ const totalPantallas = n;
     display: flex;
     flex-direction: column;
     justify-content: center;
+    /* `safe` para que, si una receta trae mucho aviso de reposo y no cabe,
+       el contenido se pegue arriba en vez de desbordar por los dos lados y
+       dejar el principio fuera de alcance. */
+    justify-content: safe center;
   }
-
-  /* El resumen es una lista larga: ahí el centrado estorba. */
-  .pantalla-resumen:not([hidden]) { justify-content: flex-start; padding-top: 1rem; }
 
   .titulo-receta,
   .titulo-pantalla {
@@ -825,51 +815,6 @@ const totalPantallas = n;
   .aviso ul { list-style: none; display: grid; gap: 0.35rem; }
 
   /* ── Bloques del resumen ───────────────────────────────── */
-  .bloque {
-    background: var(--superficie);
-    border: 3px solid var(--linea);
-    border-radius: var(--r-tarjeta);
-    box-shadow: 5px 5px 0 var(--sombra);
-    padding: 1.25rem 1.375rem;
-    margin-bottom: 1.5rem;
-  }
-
-  .bloque h2 {
-    font-family: var(--display);
-    font-size: 1.375rem;
-    font-weight: 800;
-    margin-bottom: 0.75rem;
-  }
-
-  .bloque h3 {
-    font-family: var(--pixel);
-    font-size: 0.75rem;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    color: var(--texto-tenue);
-    margin: 1.25rem 0 0.5rem;
-  }
-
-  .lista-ing { list-style: none; display: grid; gap: 0.5rem; }
-
-  .lista-ing li {
-    font-size: 1.0625rem;
-    line-height: 1.45;
-    padding-left: 1.125rem;
-    position: relative;
-  }
-
-  .lista-ing li::before {
-    content: '';
-    position: absolute;
-    left: 0;
-    top: 0.62em;
-    width: 7px;
-    height: 7px;
-    background: var(--menta);
-    border: 1.5px solid var(--linea);
-  }
-
   /* ── Mise en place ─────────────────────────────────────── */
   .checklist { list-style: none; display: grid; gap: 0.875rem; }
 

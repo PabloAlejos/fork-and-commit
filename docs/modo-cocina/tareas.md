@@ -196,8 +196,13 @@ escribirla.
       como props desde la content collection. Sin `fetch` en runtime.
 - [x] **4.2** Botón de entrada desde la vista de receta y salida de vuelta.
 - [x] **4.3** Pantalla de **resumen** (§5.1): avisos de reposo arriba,
-      ingredientes agrupados, utensilios, botón Empezar. Sin selector de
-      raciones (0.1).
+      descripción, número de pasos y botón Empezar. Sin selector de raciones
+      (0.1) y **sin lista de ingredientes ni de utensilios**, que la §5.1 sí
+      pide. Se quitan a propósito: a esta pantalla se llega desde la receta,
+      donde acabas de leer las dos y de repasar la lista de la compra.
+      Repetirlas convertía el arranque en algo que había que desplazar antes
+      de poder empezar. Lo que hace falta mientras cocinas —qué lleva este
+      paso— viaja con cada paso.
 - [x] **4.4** Pantalla de **mise en place** (§5.2): todos los pasos `prep`
       juntos con checkbox. **Se omite entera** si no hay pasos `prep`.
 - [x] **4.5** Pantalla de **ejecución** (§5.3), una por paso: posición, título,
